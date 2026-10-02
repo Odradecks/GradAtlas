@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GradAtlas 探索硕士项目</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/static/vendor/leaflet.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d1b19;
+      --ink-2: #4b4642;
+      --muted: #8d8680;
+      --faint: #b3aba4;
+      --line: #f0e9e2;
+      --bg: #f6f3ef;
+      --orange: #e8692a;
+      --orange-deep: #c9531a;
+      --orange-soft: #fff4ec;
+      --peach: #fff8f3;
+      --green: #1f8a4c;
+      --green-soft: #e9f6ee;
+      --navy: #1e2533;
+      --navy-2: #283041;
+      --red: #d6453d;
+      --shadow: 0 10px 30px rgba(50, 35, 20, .04);
+      --sticky-top: 80px;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; color: var(--ink);
+      background: radial-gradient(1200px 380px at 70% -80px, #fbeee4 0%, rgba(251, 238, 228, 0) 70%), var(--bg);
+    }
+    button, input, select { font: inherit; color: inherit; }
+    a { color: var(--orange); text-decoration: none; }
+    svg { flex: none; }
+
+    /* nav */
+    .nav {
+      display: flex; align-items: stretch; gap: 4px; height: 64px; padding: 0 32px;
+      background: #fff;
+      border-bottom: 1px solid #f0ebe6; position: sticky; top: 0; z-index: 800;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; margin-right: 22px; color: var(--ink); font-weight: 700; font-size: 1.08rem; }
+    .nav button[data-view], .nav a.item {
+      display: inline-flex; align-items: center; height: 64px; padding: 0 16px; border: 0;
+      background: transparent; color: #7d766f; cursor: pointer; white-space: nowrap;
+    }
+    .nav button.active { color: var(--orange); box-shadow: inset 0 -2px 0 var(--orange); font-weight: 600; }
+    .nav-end { margin-left: auto; display: flex; align-items: center; gap: 14px; position: relative; }
+    .lang {
+      height: 34px; padding: 0 26px 0 10px; border: 0; background: transparent no-repeat right 8px center / 11px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.2 4.2 6 8l3.8-3.8' fill='none' stroke='%238a837c' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+      appearance: none; color: var(--ink-2); cursor: pointer;
+    }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+      background: #fde7d8; color: #e48a55;
+    }
+    .avatar.on { background: var(--orange); color: #fff; }
+    #logout {
+      display: none; position: absolute; top: 56px; right: 0; padding: 8px 14px; border: 1px solid var(--line);
+      border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgba(40, 30, 20, .08); cursor: pointer;
+    }
+    .nav-end:hover #logout:not([hidden]), .nav-end:focus-within #logout:not([hidden]) { display: block; }
+
+    .page { max-width: 1320px; margin: 0 auto; padding: 26px 28px 64px; }
+
+    /* hero */
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 600px); gap: 20px; align-items: stretch; }
+    .kicker { margin: 18px 0 12px; color: #bdb4ab; letter-spacing: .16em; font-size: .72rem; font-weight: 500; }
+    h1 { margin: 0 0 10px; font-size: 2.7rem; line-height: 1.15; letter-spacing: -.02em; font-weight: 600; }
+    .subhead { margin: 0; color: #7f7871; font-size: 1.05rem; }
+    .map-wrap { position: relative; z-index: 0; height: 220px; border-radius: 18px; overflow: hidden; }
+    #map { position: absolute; inset: 0; background: transparent; }
+    .leaflet-container { font: inherit; background: transparent; outline: none; }
+    .leaflet-container .leaflet-control-attribution {
+      background: transparent; color: #c2b9b0; font-size: 9px; padding: 0 6px;
+    }
+    .leaflet-control-attribution a { color: #b6aca2; }
+    .map-badge {
+      position: absolute; top: 10px; right: 10px; z-index: 500; display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px; border-radius: 10px; background: #fff; color: #5f5954; font-size: .76rem;
+      box-shadow: 0 6px 18px rgba(40, 30, 20, .08); pointer-events: none;
+    }
+    .map-tools { position: absolute; left: 8px; bottom: 8px; z-index: 500; display: flex; gap: 4px; }
+    .map-tools button {
+      width: 26px; height: 26px; border: 1px solid #efe6df; border-radius: 8px; background: rgba(255,255,255,.92);
+      color: #7d766f; cursor: pointer; display: grid; place-items: center; padding: 0; font-size: .9rem; line-height: 1;
+    }
+    .map-tools button:hover { color: var(--orange); border-color: #f3c9ad; }
+    .map-tier {
+      position: absolute; left: 98px; bottom: 11px; z-index: 500; font-size: .7rem; color: #a59c94; pointer-events: none;
+    }
+    .pin { position: relative; width: 0; height: 0; }
+    .pin .dot {
+      position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 0 0 3px rgba(232, 105, 42, .18);
+    }
+    .pin.dim .dot { width: 7px; height: 7px; left: -3.5px; top: -3.5px; background: #cdbfb2; box-shadow: none; }
+    .pin.lit .dot { background: var(--orange); box-shadow: 0 0 0 4px rgba(232, 105, 42, .28); }
+    .pin .tag {
+      position: absolute; top: -11px; left: 9px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+      height: 22px; padding: 0 8px 0 4px; border-radius: 999px; background: rgba(255,255,255,.95);
+      color: #4b4642; font-size: 11px; box-shadow: 0 3px 10px rgba(40, 30, 20, .1);
+    }
+    .pin.flip .tag { left: auto; right: 9px; }
+    .pin.above .tag { left: 0; top: -38px; transform: translateX(-50%); }
+    .pin.below .tag { left: 0; top: 12px; transform: translateX(-50%); }
+    .pin .tag img { width: 15px; height: 15px; object-fit: contain; }
+    .pin .tag b { font-weight: 600; color: var(--ink); }
+    .pin.lit .tag { box-shadow: 0 0 0 1.5px var(--orange), 0 3px 10px rgba(40, 30, 20, .1); }
+    .pin .ring {
+      position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--orange); animation: pulse 1.4s ease-out infinite;
+    }
+    @keyframes pulse { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+    .leaflet-tooltip.uni-tip {
+      padding: 6px 9px; border: 0; border-radius: 10px; box-shadow: 0 6px 18px rgba(40, 30, 20, .14); font-size: 12px; color: var(--ink);
+    }
+    .uni-tip .tip { display: flex; align-items: center; gap: 6px; }
+    .uni-tip img { width: 20px; height: 20px; object-fit: contain; }
+    .uni-tip small { display: block; color: var(--muted); font-size: 11px; }
+
+    /* search */
+    .search { display: flex; gap: 14px; margin: 18px 0 14px; }
+    .search-box {
+      flex: 1; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 18px;
+      background: #fff; border: 1px solid #ede5dd; border-radius: 12px; box-shadow: var(--shadow);
+    }
+    .search-box:focus-within { border-color: #f1c3a5; box-shadow: 0 0 0 3px rgba(232, 105, 42, .08); }
+    .search-box input { flex: 1; height: 52px; border: 0; outline: none; background: transparent; font-size: 1rem; }
+    .search-box input::-webkit-search-cancel-button { display: none; }
+    kbd {
+      display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border: 1px solid #ece4dc; border-bottom-width: 2px;
+      border-radius: 6px; background: #faf8f6; color: #8d8680; font: 600 .72rem/1 "Segoe UI", sans-serif;
+    }
+    .kbd-btn { border: 0; padding: 0; background: transparent; cursor: pointer; }
+    .search button[type="submit"] {
+      width: 132px; height: 54px; border: 0; border-radius: 12px; background: var(--orange); color: #fff; font-weight: 600; cursor: pointer;
+      box-shadow: 0 8px 18px rgba(232, 105, 42, .22);
+    }
+    .search button[type="submit"]:hover { background: var(--orange-deep); }
+    .active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 30px; margin-bottom: 16px; }
+    .filter-chip {
+      display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border: 1px solid #ece4dc;
+      border-radius: 999px; background: #fff; color: #3f3a36; cursor: pointer; font-size: .86rem;
+    }
+    .filter-chip span { color: #a8a099; }
+    .clear-filters { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: .86rem; }
+
+    /* workspace */
+    .workspace { display: grid; grid-template-columns: 232px minmax(0, 1fr) 372px; gap: 16px; align-items: start; }
+    .panel { background: #fff; border: 1px solid #f1eae3; border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+    .side {
+      position: sticky; top: var(--sticky-top); min-width: 0;
+      max-height: calc(100vh - var(--sticky-top) - 16px); overflow: auto;
+    }
+    h2 { margin: 0; font-size: 1.05rem; }
+    .row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .text-btn { display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--orange); cursor: pointer; padding: 0; }
+    .block { margin-top: 18px; }
+    .block + .block { padding-top: 16px; border-top: 1px solid #f4eee8; }
+    .block > p { margin: 0 0 10px; color: #7f7871; font-size: .86rem; }
+    .check { display: flex; align-items: center; gap: 10px; margin: 10px 0; color: var(--ink-2); font-size: .92rem; cursor: pointer; }
+    .check input { appearance: none; width: 17px; height: 17px; margin: 0; border: 1.5px solid #d9d1c9; border-radius: 4px; display: grid; place-items: center; cursor: pointer; }
+    .check input:checked { background: var(--orange); border-color: var(--orange); }
+    .check input:checked::after { content: ""; width: 9px; height: 5px; border: 2px solid #fff; border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+    .check small { margin-left: auto; color: var(--faint); font-size: .76rem; }
+    .select {
+      width: 100%; height: 42px; border: 1px solid #ebe3db; border-radius: 10px; padding: 0 30px 0 12px; appearance: none; cursor: pointer;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.2 4.2 6 8l3.8-3.8' fill='none' stroke='%236f6964' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center / 11px;
+    }
+    .select.sm { width: auto; height: 32px; min-width: 112px; font-size: .84rem; padding-right: 28px; }
+    .filter-note { display: flex; gap: 8px; margin: 18px 0 0; padding-top: 16px; border-top: 1px solid #f4eee8; color: #a39c96; font-size: .76rem; line-height: 1.6; }
+    .extra { display: none; }
+
+    .list-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .list-title { display: flex; align-items: center; gap: 10px; }
+    .count { padding: 3px 10px; border-radius: 999px; background: #f4f0ec; color: #7f7871; font-size: .76rem; }
+    .sort { display: inline-flex; align-items: center; gap: 4px; color: #6f6964; font-size: .86rem; }
+    .sort select { border: 0; background: transparent; color: inherit; cursor: pointer; appearance: none; padding-right: 16px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.2 4.2 6 8l3.8-3.8' fill='none' stroke='%236f6964' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 0 center / 11px; }
+    .compare-btn { height: 30px; padding: 0 12px; border: 1px solid #f1c9ad; border-radius: 999px; background: var(--orange-soft); color: var(--orange-deep); cursor: pointer; font-size: .82rem; }
+    .compare-btn.on { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .cards { display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      position: relative; border: 1px solid #efe7e0; border-radius: 14px; background: #fff; padding: 18px 18px 14px; cursor: pointer;
+      transition: border-color .2s, background-color .2s, box-shadow .2s;
+    }
+    .card:hover { border-color: #f1cdb4; box-shadow: 0 8px 24px rgba(232, 105, 42, .06); }
+    .card.selected { border-color: #f0a679; background: var(--peach); box-shadow: 0 0 0 1px #f0a679, 0 10px 26px rgba(232, 105, 42, .08); }
+    .card.in-compare { border-color: #f0a679; box-shadow: 0 0 0 1px #f0a679; }
+    .card.flash { animation: flash 1.2s ease-out; }
+    @keyframes flash { 0%, 30% { box-shadow: 0 0 0 4px rgba(232, 105, 42, .35); } 100% { box-shadow: 0 0 0 1px #f0a679; } }
+    .card-main { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .crest { width: 52px; height: 52px; display: grid; place-items: center; }
+    .crest img { max-width: 52px; max-height: 52px; object-fit: contain; display: block; }
+    .monogram { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 1.1rem; }
+    .card-body { min-width: 0; padding-right: 30px; }
+    .uni-line { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .uni { font-weight: 700; font-size: .95rem; }
+    .verified {
+      display: inline-flex; align-items: center; gap: 3px; height: 21px; padding: 0 8px; border-radius: 999px;
+      background: var(--green-soft); color: var(--green); font-size: .74rem; font-weight: 600;
+    }
+    .verified.sample { background: #f4f0ec; color: var(--muted); }
+    .prog { margin: 8px 0 0; font-size: 1.08rem; font-weight: 700; }
+    .en { margin: 3px 0 0; color: var(--muted); font-size: .84rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 10px 0 0; color: #77706a; font-size: .84rem; }
+    .meta span { display: inline-flex; align-items: center; gap: 5px; }
+    .mark {
+      position: absolute; top: 16px; right: 16px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px;
+      background: transparent; display: grid; place-items: center; color: #b9b1aa; cursor: pointer;
+    }
+    .mark:hover { color: var(--orange); background: var(--orange-soft); }
+    .mark.on { color: var(--orange); }
+    .mark.on path { fill: currentColor; }
+    .card-selects { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 14px; }
+    .card-selects label { display: flex; align-items: center; gap: 10px; color: #77706a; font-size: .84rem; }
+    .card-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #f1e8e0; }
+    .card-actions a { display: inline-flex; align-items: center; gap: 6px; font-size: .86rem; font-weight: 600; }
+    .card-actions a:hover { color: var(--orange-deep); }
+    .empty { color: var(--muted); padding: 32px 8px; text-align: center; }
+
+    /* QA */
+    .qa {
+      display: flex; flex-direction: column; padding: 18px 16px 14px; overflow: hidden;
+      min-height: min(560px, calc(100vh - var(--sticky-top) - 16px));
+    }
+    .qa-head { flex: none; }
+    .qa-who { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 12px 0 12px; min-height: 30px; }
+    .qa-who .who { font-weight: 600; margin-right: 4px; max-width: 100%; }
+    .qa-who.swap { animation: swap .35s ease-out; }
+    @keyframes swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .chip-select {
+      height: 28px; padding: 0 24px 0 28px; border: 1px solid #ece4dc; border-radius: 8px; appearance: none; cursor: pointer;
+      background: #fff no-repeat; font-size: .8rem; color: var(--ink-2);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.2 4.2 6 8l3.8-3.8' fill='none' stroke='%236f6964' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E"),
+        var(--chip-icon);
+      background-position: right 8px center, 9px center; background-size: 10px, 13px;
+    }
+    .chip-select.when { --chip-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='3' width='12' height='11' rx='2' fill='none' stroke='%236f6964' stroke-width='1.3'/%3E%3Cpath d='M2 6.5h12M5.5 1.5v3M10.5 1.5v3' stroke='%236f6964' stroke-width='1.3'/%3E%3C/svg%3E"); }
+    .chip-select.mode { --chip-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='2' width='11' height='12' rx='2' fill='none' stroke='%236f6964' stroke-width='1.3'/%3E%3Cpath d='M5 5.5h6M5 8h6M5 10.5h4' stroke='%236f6964' stroke-width='1.3'/%3E%3C/svg%3E"); }
+    .chip-select:disabled { cursor: default; color: var(--muted); }
+    .stage-box {
+      flex: 1; min-height: 0; display: flex; flex-direction: column; border-radius: 14px; background: var(--navy); color: #fff; overflow: hidden;
+    }
+    .intro { flex: none; padding: 16px 16px 6px; }
+    .intro strong { display: flex; align-items: center; gap: 8px; font-size: 1.06rem; }
+    .intro strong em { font-style: normal; color: #ff8a4c; }
+    .intro p { margin: 6px 0 0 26px; color: #b9c0cc; font-size: .82rem; }
+    .log { flex: 1; min-height: 160px; overflow: auto; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+    .log::-webkit-scrollbar { width: 6px; }
+    .log::-webkit-scrollbar-thumb { background: #3a4356; border-radius: 6px; }
+    .msg-user {
+      align-self: flex-end; max-width: 84%; padding: 9px 13px; border-radius: 12px 12px 4px 12px; background: #e9eefb; color: #1e2533;
+      font-size: .86rem; line-height: 1.5; animation: rise .25s ease-out;
+    }
+    button.msg-user { border: 0; cursor: pointer; text-align: left; }
+    button.msg-user:hover { background: #fff; }
+    .msg-user small { display: block; color: #7d8597; font-size: .7rem; margin-bottom: 2px; }
+    .msg-bot { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; align-items: start; animation: rise .25s ease-out; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .bot-avatar { width: 30px; height: 30px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+    .bot-bubble { min-width: 0; padding: 10px 12px; border-radius: 4px 12px 12px 12px; background: #fff; color: #2b2724; font-size: .86rem; line-height: 1.6; }
+    .bot-bubble.failed { background: #fff3f2; box-shadow: inset 0 0 0 1px #f5c8c4; }
+    .bot-bubble p { margin: 0 0 6px; }
+    .bot-bubble p:last-child { margin-bottom: 0; }
+    .bot-bubble ul, .bot-bubble ol { margin: 4px 0 6px; padding-left: 18px; }
+    .bot-bubble .guide-tag { display: block; text-align: right; color: var(--faint); font-size: .7rem; margin-top: 4px; }
+    .stage {
+      display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; margin-bottom: 8px; border-radius: 999px;
+      font-size: .72rem; font-weight: 600;
+    }
+    .stage.retrieving { background: #eaf1fb; color: #2f64b5; }
+    .stage.answering { background: var(--orange-soft); color: var(--orange-deep); }
+    .stage.done { background: var(--green-soft); color: var(--green); }
+    .stage.limited { background: #f4f0ec; color: #6f6964; }
+    .stage.error { background: #fde8e6; color: var(--red); }
+    .spin { width: 10px; height: 10px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .dots { display: inline-flex; gap: 2px; }
+    .dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: blink 1s infinite; }
+    .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+    @keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+    .skeleton { display: grid; gap: 6px; }
+    .skeleton i { height: 9px; border-radius: 6px; background: linear-gradient(90deg, #f1ece7 0%, #faf7f4 50%, #f1ece7 100%); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; }
+    .skeleton i:nth-child(2) { width: 82%; } .skeleton i:nth-child(3) { width: 58%; }
+    @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    .caret { display: inline-block; width: 7px; height: 14px; margin-left: 2px; vertical-align: -2px; background: var(--orange); animation: blink .9s infinite; }
+    .cite {
+      display: inline-grid; place-items: center; min-width: 18px; height: 17px; margin: 0 1px; padding: 0 4px; border: 0; border-radius: 5px;
+      background: var(--orange-soft); color: var(--orange-deep); font-size: .7rem; font-weight: 700; vertical-align: 1px; cursor: pointer;
+    }
+    .cite:hover, .cite.on { background: var(--orange); color: #fff; }
+    .retry { margin-top: 8px; height: 28px; padding: 0 12px; border: 1px solid #f1c9c4; border-radius: 8px; background: #fff; color: var(--red); cursor: pointer; font-size: .8rem; }
+    .cites { display: grid; gap: 6px; margin-left: 38px; }
+    .cite-card { border-radius: 12px; background: #fffaf5; color: #2b2724; overflow: hidden; animation: rise .25s ease-out; }
+    .cite-card.open { box-shadow: 0 0 0 1.5px #f3a876; }
+    .cite-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; padding: 9px 10px; border: 0; background: transparent; cursor: pointer; text-align: left; }
+    .doc-ico { width: 26px; height: 30px; border-radius: 4px; background: #fde9dd; color: var(--orange-deep); display: grid; place-items: center; font-size: .56rem; font-weight: 800; }
+    .cite-row strong { display: block; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cite-row small { display: block; color: #8d8680; font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cite-row .n { color: var(--orange-deep); font-weight: 700; margin-right: 4px; }
+    .cite-row .chev { color: #b3aba4; transition: transform .2s; }
+    .cite-card.open .chev { transform: rotate(180deg); }
+    .cite-body { display: none; padding: 0 12px 12px; }
+    .cite-card.open .cite-body { display: block; }
+    .cite-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; font-size: .74rem; color: #8d8680; }
+    .cite-tools a { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; white-space: nowrap; }
+    .quote {
+      max-height: 220px; overflow: auto; margin: 0; padding: 10px 12px; border-left: 3px solid #f3c3a1; border-radius: 6px; background: #fdf3ea;
+      color: #5a534d; font-size: .78rem; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+    }
+    .quote mark { background: #ffd9a8; color: #2b2724; border-radius: 3px; padding: 1px 0; }
+    .src-card { margin: 4px 0 0; border-radius: 12px; background: #fffaf5; color: #2b2724; padding: 10px 12px; }
+    .src-card h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; font-size: .82rem; }
+    .src-card h3::before { content: ""; width: 14px; height: 14px; border-radius: 3px; background: #fde2cf; box-shadow: inset 0 0 0 2px #f3a876; }
+    .src-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px dashed #f1e5da; font-size: .78rem; }
+    .src-row:first-of-type { border-top: 0; }
+    .src-row small { display: block; color: var(--muted); font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .src-row a { font-weight: 600; white-space: nowrap; font-size: .76rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: 38px; }
+    .ask-chip { height: 26px; padding: 0 10px; border: 1px solid #3a4356; border-radius: 999px; background: transparent; color: #c9cfda; cursor: pointer; font-size: .76rem; }
+    .ask-chip:hover { border-color: #ff8a4c; color: #fff; }
+    .ask { flex: none; display: flex; gap: 8px; margin-top: 12px; }
+    .ask-input { flex: 1; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid #ebe3db; border-radius: 10px; background: #fff; }
+    .ask-input:focus-within { border-color: #f1c3a5; }
+    .ask-input input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; }
+    .send { width: 44px; height: 44px; border: 0; border-radius: 10px; background: var(--orange); color: #fff; cursor: pointer; display: grid; place-items: center; }
+    .send:disabled { background: #f1c8ae; cursor: default; }
+    .fine { flex: none; display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: #a39c96; font-size: .74rem; }
+
+    /* palette */
+    .palette { position: fixed; inset: 0; z-index: 1000; background: rgba(30, 25, 20, .32); backdrop-filter: blur(2px); display: grid; justify-items: center; align-items: start; padding-top: 12vh; animation: fade .15s ease-out; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .palette-box { width: min(620px, calc(100vw - 32px)); border-radius: 16px; background: #fff; box-shadow: 0 30px 80px rgba(30, 20, 10, .28); overflow: hidden; animation: pop .18s ease-out; }
+    @keyframes pop { from { transform: translateY(-6px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+    .palette-input { display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+    .palette-input input { flex: 1; height: 56px; border: 0; outline: none; font-size: 1.02rem; }
+    .palette-list { max-height: 52vh; overflow: auto; padding: 6px; }
+    .palette-group { padding: 10px 10px 4px; color: var(--faint); font-size: .72rem; letter-spacing: .08em; }
+    .palette-item { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; text-align: left; cursor: pointer; }
+    .palette-item.active { background: var(--orange-soft); }
+    .palette-item img { width: 28px; height: 28px; object-fit: contain; }
+    .palette-item .glyph { width: 28px; height: 28px; border-radius: 8px; background: #f4f0ec; display: grid; place-items: center; color: #8d8680; font-size: .8rem; }
+    .palette-item strong { display: block; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .palette-item small { display: block; color: var(--muted); font-size: .76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .palette-item .hint { color: var(--faint); font-size: .74rem; }
+    .palette-empty { padding: 26px; text-align: center; color: var(--muted); }
+    .palette-foot { display: flex; gap: 14px; padding: 10px 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: .74rem; }
+
+    .to-top {
+      position: fixed; right: 26px; bottom: 26px; z-index: 40; width: 46px; height: 46px; border: 0; border-radius: 50%;
+      background: #fff; color: var(--orange); box-shadow: 0 10px 28px rgba(40, 30, 20, .16); cursor: pointer; display: grid; place-items: center;
+      opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .2s, transform .2s, background-color .2s;
+    }
+    .to-top.show { opacity: 1; transform: none; pointer-events: auto; }
+    .to-top:hover { background: var(--orange); color: #fff; }
+
+    @media (max-width: 1180px) {
+      .workspace { grid-template-columns: 220px minmax(0, 1fr); }
+      .qa { grid-column: 1 / -1; }
+      .qa .stage-box { min-height: 420px; }
+    }
+    @media (max-width: 860px) {
+      .hero, .workspace { grid-template-columns: 1fr; }
+      .nav { padding: 0 14px; }
+      .page { padding: 18px 14px 48px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/browse">
+      <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.5 16 15.5H2Z" fill="#F15A00"/></svg>
+      GradAtlas
+    </a>
+    <button type="button" data-view="explore" class="active">探索项目</button>
+    <button type="button" data-view="saved">我的收藏</button>
+    <a class="item" href="/browse/catalog">项目目录</a>
+    <div class="nav-end">
+      <select class="lang" aria-label="语言" title="目前界面只有中文"><option>中文</option></select>
+      <a class="avatar" id="account-link" href="/login" aria-label="登录">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="6" r="3" fill="currentColor"/><path d="M3.5 15.5c.8-2.8 2.8-4 5.5-4s4.7 1.2 5.5 4" fill="currentColor"/></svg>
+      </a>
+      <button type="button" id="logout" hidden>退出</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <section class="hero">
+      <div>
+        <p class="kicker">GRADUATE PROGRAM EXPLORER</p>
+        <h1>让下一站，更清晰</h1>
+        <p class="subhead">从官方资料出发，探索你的硕士项目。</p>
+      </div>
+      <div class="map-wrap">
+        <div id="map" aria-label="学校分布地图"></div>
+        <span class="map-badge">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="4" rx="5.5" ry="2" fill="none" stroke="#e8692a" stroke-width="1.3"/><path d="M2.5 4v8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2V4M2.5 8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2" fill="none" stroke="#e8692a" stroke-width="1.3"/></svg>
+          官方资料 · 可追溯
+        </span>
+        <div class="map-tools">
+          <button type="button" id="zoom-in" aria-label="放大">+</button>
+          <button type="button" id="zoom-out" aria-label="缩小">−</button>
+          <button type="button" id="zoom-world" aria-label="回到全球" title="回到全球">
+            <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+          </button>
+        </div>
+        <span class="map-tier" id="map-tier"></span>
+      </div>
+    </section>
+
+    <form class="search" id="search-form">
+      <label class="search-box">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="#6f6964" stroke-width="1.6"/><path d="m12.2 12.2 3.6 3.6" stroke="#6f6964" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="query" type="search" placeholder="搜索学校或项目" autocomplete="off">
+        <button type="button" class="kbd-btn" id="open-palette" title="快捷搜索"><kbd id="kbd-hint">⌘ K</kbd></button>
+      </label>
+      <button type="submit">搜索</button>
+    </form>
+    <div class="active-filters" id="active-filters"></div>
+
+    <div class="workspace">
+      <aside class="panel side filters">
+        <div class="row-between">
+          <h2>筛选条件</h2>
+          <button type="button" class="text-btn" id="reset">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v2.8h2.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            重置
+          </button>
+        </div>
+        <div class="block">
+          <p>国家 / 地区</p>
+          <div id="countries"></div>
+        </div>
+        <div class="block">
+          <p>入学年份</p>
+          <select id="year" class="select"><option value="">全部年份</option></select>
+          <p style="margin-top:16px">学科领域</p>
+          <select id="field" class="select"><option value="">全部领域</option></select>
+        </div>
+        <p class="filter-note">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#b3aba4"/><path d="M8 7v4.2M8 4.6v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>仅展示有官方招生资料的项目，所有信息均来自学校官网，并可追溯至原文。</span>
+        </p>
+        <div class="extra">
+          <div id="language-scores">
+            <label class="score"><input type="checkbox" data-test="toefl_ibt">托福<input type="number" min="0" max="120" step="0.1" disabled></label>
+            <label class="score"><input type="checkbox" data-test="ielts">雅思<input type="number" min="0" max="9" step="0.5" disabled></label>
+            <label class="score"><input type="checkbox" data-test="duolingo">多邻国<input type="number" min="10" max="160" step="1" disabled></label>
+            <label class="score"><input type="checkbox" data-test="pte">PTE<input type="number" min="10" max="90" step="1" disabled></label>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel list">
+        <div class="list-head">
+          <div class="list-title">
+            <h2 id="list-title">项目列表</h2>
+            <span class="count" id="list-count"></span>
+            <button type="button" class="compare-btn" id="compare-toggle" hidden>对比收藏</button>
+          </div>
+          <label class="sort">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M5 13l-2.5-2.5M5 13l2.5-2.5M11 13V3M11 3 8.5 5.5M11 3l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <select id="sort" aria-label="排序">
+              <option value="name">按学校名称排序</option>
+              <option value="country">按国家排序</option>
+              <option value="year">按入学年份排序</option>
+            </select>
+          </label>
+        </div>
+        <div id="cards" class="cards"></div>
+      </section>
+
+      <aside class="panel side qa" id="qa">
+        <div class="qa-head">
+          <div class="row-between">
+            <h2 id="qa-title">项目问答</h2>
+            <button type="button" class="text-btn" id="toggle-cites" title="展开最近一次回答的全部原文依据">
+              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1.8h5.5L13 5.3v8.2a.8.8 0 0 1-.8.8H4a.8.8 0 0 1-.8-.8V2.6a.8.8 0 0 1 .8-.8Z M9.3 2v3.5H13 M5.5 8.5h5M5.5 11h3.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+              原文引用
+            </button>
+          </div>
+          <div class="qa-who" id="qa-who"></div>
+        </div>
+        <div class="stage-box">
+          <div class="intro">
+            <strong>
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.5c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z" fill="#ff8a4c"/></svg>
+              <span>每一个回答，都能<em>追溯原文</em></span>
+            </strong>
+            <p>基于学校官方资料，提供准确、可引用的回答。</p>
+          </div>
+          <div class="log" id="log"></div>
+        </div>
+        <form class="ask" id="ask-form">
+          <label class="ask-input">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H6.5L3.5 13.5v-2.5h0a1 1 0 0 1-1-1Z" fill="none" stroke="#8d8680" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <input id="ask-input" placeholder="询问这个项目..." autocomplete="off" maxlength="500">
+          </label>
+          <button class="send" id="send" type="submit" aria-label="发送">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 8.6 15.5 2.5 11.6 15.5 9 10.2Z" fill="#fff"/><path d="M9 10.2 15.5 2.5" stroke="#e8692a" stroke-width="1.2"/></svg>
+          </button>
+        </form>
+        <p class="fine" id="fine">
+          <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#b3aba4"/><path d="M8 7v4.2M8 4.6v.1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>资料不足时会明确说明，避免不准确的推断。</span>
+        </p>
+      </aside>
+    </div>
+  </div>
+
+  <div class="palette" id="palette" hidden>
+    <div class="palette-box" role="dialog" aria-modal="true" aria-label="快捷搜索">
+      <div class="palette-input">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="#8d8680" stroke-width="1.6"/><path d="m12.2 12.2 3.6 3.6" stroke="#8d8680" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="palette-input" placeholder="搜索项目、学校或国家" autocomplete="off" role="combobox" aria-controls="palette-list" aria-expanded="true">
+        <kbd>Esc</kbd>
+      </div>
+      <div class="palette-list" id="palette-list" role="listbox"></div>
+      <div class="palette-foot"><span>↑ ↓ 选择</span><span>Enter 打开</span><span>Esc 关闭</span></div>
+    </div>
+  </div>
+
+  <button type="button" class="to-top" id="to-top" aria-label="回到顶部" title="回到顶部">
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 14.5V4M4.5 8.5 9 4l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <script src="/static/vendor/leaflet.js"></script>
+  <script src="/static/labels.js"></script>
+  <script src="/static/logos.js"></script>
+  <script src="/static/geo.js"></script>
+  <script src="/static/markdown.js"></script>
+  <script>
+    const SAVED_KEY = "gradatlas.saved";
+    const SINGLE_CHIPS = ["申请需要准备哪些材料？", "申请截止日期是什么时候？", "语言成绩有什么要求？"];
+    const COMPARE_CHIPS = ["语言要求有什么差别？", "学费有什么差别？"];
+    const SINGLE_FINE = "资料不足时会明确说明，避免不准确的推断。";
+    const COMPARE_FINE = "每个项目只检索自己这一年的官网原文，最多对比 4 个项目。";
+    const ICON_PIN = '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14.5s4.5-4.2 4.5-7.8a4.5 4.5 0 0 0-9 0c0 3.6 4.5 7.8 4.5 7.8Z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="6.6" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
+    const ICON_CAL = '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" stroke-width="1.3"/></svg>';
+    const ICON_DOC = '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1.8h5.5L13 5.3v8.2a.8.8 0 0 1-.8.8H4a.8.8 0 0 1-.8-.8V2.6a.8.8 0 0 1 .8-.8Z M9.3 2v3.5H13 M5.5 8.5h5M5.5 11h3.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+    const ICON_OUT = '<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5h5.5V8M9.3 2.7 2.5 9.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+    const ICON_ARROW = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h8M6.8 2.8 10 6 6.8 9.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const ICON_MARK = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.2h8a.8.8 0 0 1 .8.8v10.6L8 11.1 3.2 13.6V3a.8.8 0 0 1 .8-.8Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+    const ICON_CHEV = '<svg class="chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+    const BOT_AVATAR = '<svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.5 16 15.5H2Z" fill="#F15A00"/></svg>';
+
+    let items = [];
+    let view = "explore";
+    let selectedKey = null;
+    let chosenIntake = null;
+    let compareKeys = new Set();
+    let currentUser = null;
+    let serverSaved = null;
+    let lastTurn = null;
+    let activeRequest = null;
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+    function monthText(row) { return row.admission_year + "年" + (row.entry_month ? row.entry_month + "月" : ""); }
+
+    /* ---------- favorites & account ---------- */
+    function localSaved() {
+      try { return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || "[]")); }
+      catch { return new Set(); }
+    }
+    function savedSet() {
+      if (currentUser && serverSaved) return new Set(serverSaved);
+      return localSaved();
+    }
+    function storeSaved(set) {
+      const keys = [...set];
+      if (!currentUser) {
+        localStorage.setItem(SAVED_KEY, JSON.stringify(keys));
+        return;
+      }
+      serverSaved = new Set(keys);
+      fetch("/me/favorites", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keys }),
+      }).then(async (response) => {
+        if (!response.ok) return;
+        const payload = await response.json();
+        serverSaved = new Set(payload.keys);
+        if (view !== "explore") render();
+      });
+    }
+    function renderAccount() {
+      const link = document.getElementById("account-link");
+      const logout = document.getElementById("logout");
+      link.classList.toggle("on", Boolean(currentUser));
+      link.setAttribute("aria-label", currentUser ? currentUser.email : "登录");
+      link.title = currentUser ? currentUser.email : "登录";
+      logout.hidden = !currentUser;
+    }
+    async function loadAccount() {
+      const me = await fetch("/auth/me");
+      const payload = me.ok ? await me.json() : { user: null };
+      currentUser = payload.user;
+      if (!currentUser) {
+        serverSaved = null;
+        renderAccount();
+        return;
+      }
+      const local = [...localSaved()];
+      let remote = [];
+      const listed = await fetch("/me/favorites");
+      if (listed.ok) remote = (await listed.json()).keys || [];
+      const merged = [...new Set([...remote, ...local])];
+      if (local.length && merged.length !== remote.length) {
+        const saved = await fetch("/me/favorites", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys: merged }),
+        });
+        if (saved.ok) {
+          remote = (await saved.json()).keys || merged;
+          localStorage.removeItem(SAVED_KEY);
+        }
+      } else if (local.length) {
+        localStorage.removeItem(SAVED_KEY);
+      }
+      serverSaved = new Set(remote);
+      renderAccount();
+    }
+
+    /* ---------- data helpers ---------- */
+    function groupKey(item) { return item.country_code + "\0" + item.university_name + "\0" + item.program_slug; }
+    function zhUni(item) { return label(UNIVERSITIES, item.university_name); }
+    function zhProg(item) { return label(PROGRAMS, item.program_name); }
+    function groupsOf(list) {
+      const map = new Map();
+      for (const item of list) {
+        const key = groupKey(item);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(item);
+      }
+      for (const rows of map.values()) {
+        rows.sort((a, b) => a.admission_year - b.admission_year || a.entry_month - b.entry_month);
+      }
+      return [...map.entries()];
+    }
+    function languageParams() {
+      const params = new URLSearchParams();
+      params.set("limit", "200");
+      for (const box of document.querySelectorAll("#language-scores input[type=checkbox]")) {
+        const input = box.parentElement.querySelector("input[type=number]");
+        if (box.checked && input.value !== "") params.append("lang", box.dataset.test + ":" + input.value);
+      }
+      return params;
+    }
+    function checkedCountries() { return [...document.querySelectorAll("#countries input:checked")].map((box) => box.value); }
+    function searchBlob(item) {
+      return [zhUni(item), item.university_name, zhProg(item), item.program_name, item.city, label(COUNTRIES, item.country_code)].join(" ").toLowerCase();
+    }
+    function filteredItems() {
+      const q = document.getElementById("query").value.trim().toLowerCase();
+      const countries = checkedCountries();
+      const year = document.getElementById("year").value;
+      const field = document.getElementById("field").value;
+      const saved = savedSet();
+      return items.filter((item) => {
+        if (view !== "explore" && !saved.has(groupKey(item))) return false;
+        if (countries.length && !countries.includes(item.country_code)) return false;
+        if (year && String(item.admission_year) !== year) return false;
+        if (field && !item.fields.includes(field)) return false;
+        return !q || searchBlob(item).includes(q);
+      });
+    }
+
+    /* ---------- filters ---------- */
+    function renderCountries() {
+      const box = document.getElementById("countries");
+      const previous = new Set(checkedCountries());
+      const counts = new Map();
+      for (const [, rows] of groupsOf(items)) counts.set(rows[0].country_code, (counts.get(rows[0].country_code) || 0) + 1);
+      const codes = [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b));
+      box.replaceChildren();
+      for (const code of codes) {
+        const row = el("label", "check");
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = code;
+        input.checked = previous.has(code);
+        row.append(input, document.createTextNode(label(COUNTRIES, code)), el("small", "", String(counts.get(code))));
+        box.appendChild(row);
+      }
+    }
+    function fillSelect(id, values, text) {
+      const select = document.getElementById(id);
+      const current = select.value;
+      const first = select.options[0];
+      select.replaceChildren(first);
+      for (const value of values) select.append(new Option(text(value), value));
+      if ([...select.options].some((option) => option.value === current)) select.value = current;
+    }
+    function renderChoices() {
+      renderCountries();
+      fillSelect("year", [...new Set(items.map((item) => String(item.admission_year)))].sort(), (value) => value);
+      fillSelect("field", [...new Set(items.flatMap((item) => item.fields))].sort(), (value) => label(FIELDS, value));
+    }
+    function renderActiveFilters() {
+      const host = document.getElementById("active-filters");
+      host.replaceChildren();
+      const add = (text, onRemove) => {
+        const button = el("button", "filter-chip");
+        button.type = "button";
+        button.append(document.createTextNode(text), el("span", "", "×"));
+        button.addEventListener("click", onRemove);
+        host.appendChild(button);
+      };
+      const query = document.getElementById("query").value.trim();
+      if (query) add("“" + query + "”", () => { document.getElementById("query").value = ""; render(); });
+      for (const box of document.querySelectorAll("#countries input:checked")) {
+        add(label(COUNTRIES, box.value), () => { box.checked = false; render(); });
+      }
+      const year = document.getElementById("year");
+      if (year.value) add(year.value, () => { year.value = ""; render(); });
+      const field = document.getElementById("field");
+      if (field.value) add(label(FIELDS, field.value), () => { field.value = ""; render(); });
+      if (host.childNodes.length) {
+        const clear = el("button", "clear-filters", "清除全部");
+        clear.type = "button";
+        clear.addEventListener("click", resetFilters);
+        host.appendChild(clear);
+      }
+    }
+    function resetFilters() {
+      document.getElementById("query").value = "";
+      document.getElementById("year").value = "";
+      document.getElementById("field").value = "";
+      for (const box of document.querySelectorAll("#countries input")) box.checked = false;
+      const scored = [...document.querySelectorAll("#language-scores input[type=checkbox]")].some((box) => box.checked);
+      for (const box of document.querySelectorAll("#language-scores input[type=checkbox]")) box.checked = false;
+      for (const input of document.querySelectorAll("#language-scores input[type=number]")) { input.value = ""; input.disabled = true; }
+      if (scored) load().catch(() => {}); else render();
+    }
+
+    /* ---------- crests ---------- */
+    function monogram(name) {
+      const colors = ["#f0b429", "#5aa6e6", "#8d7ae0", "#e07a5f", "#5eae8a"];
+      let index = 0;
+      for (const ch of name) index = (index + ch.charCodeAt(0)) % colors.length;
+      const mark = el("div", "monogram", name.slice(0, 1));
+      mark.style.background = colors[index];
+      return mark;
+    }
+    function crestSrc(nameEn) { return typeof UNIVERSITY_LOGOS !== "undefined" ? UNIVERSITY_LOGOS[nameEn] || "" : ""; }
+    function crestFor(item) {
+      const box = el("div", "crest");
+      const src = crestSrc(item.university_name);
+      if (!src) { box.appendChild(monogram(zhUni(item))); return box; }
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.src = src;
+      img.addEventListener("error", () => img.replaceWith(monogram(zhUni(item))));
+      box.appendChild(img);
+      return box;
+    }
+
+    /* ---------- cards ---------- */
+    function shownRow(rows) { return rows.find((row) => String(row.intake_id) === String(chosenIntake)) || rows[rows.length - 1]; }
+    function cardFor(rows, key) {
+      const item = rows[0];
+      const shown = key === selectedKey ? shownRow(rows) : rows[rows.length - 1];
+      const card = el("article", "card");
+      card.dataset.key = key;
+      card.classList.toggle("selected", view !== "compare" && key === selectedKey);
+      card.classList.toggle("in-compare", view === "compare" && compareKeys.has(key));
+
+      const main = el("div", "card-main");
+      const body = el("div", "card-body");
+      const uniLine = el("div", "uni-line");
+      const badge = el("span", "verified" + (item.verified ? "" : " sample"), item.verified ? "✓ 已核对" : "样例");
+      uniLine.append(el("span", "uni", zhUni(item)), badge);
+      body.append(uniLine, el("p", "prog", zhProg(item)));
+      if (zhProg(item) !== item.program_name) body.appendChild(el("p", "en", item.program_name));
+      const meta = el("p", "meta");
+      const place = el("span");
+      place.innerHTML = ICON_PIN;
+      place.append(label(COUNTRIES, item.country_code) + (item.city ? " · " + item.city : ""));
+      const when = el("span");
+      when.innerHTML = ICON_CAL;
+      when.append(monthText(shown));
+      meta.append(place, when);
+      body.appendChild(meta);
+
+      const selects = el("div", "card-selects");
+      const seasonLabel = el("label", "", "入学季");
+      const season = el("select", "select sm");
+      for (const row of rows) season.append(new Option(monthText(row), String(row.intake_id)));
+      season.value = String(shown.intake_id);
+      season.addEventListener("change", () => {
+        chosenIntake = season.value;
+        selectGroup(key);
+      });
+      seasonLabel.appendChild(season);
+      const modeLabel = el("label", "", "选拔方式");
+      const mode = el("select", "select sm");
+      const labels = [...new Set(rows.map((row) => row.intake_label).filter(Boolean))];
+      if (!labels.length) { mode.append(new Option("未标注", "")); mode.disabled = true; }
+      for (const text of labels) mode.append(new Option(text, text));
+      if (shown.intake_label) mode.value = shown.intake_label;
+      mode.addEventListener("change", () => {
+        const match = rows.find((row) => row.intake_label === mode.value);
+        if (!match) return;
+        chosenIntake = String(match.intake_id);
+        selectGroup(key);
+      });
+      modeLabel.appendChild(mode);
+      selects.append(seasonLabel, modeLabel);
+      body.appendChild(selects);
+      main.append(crestFor(item), body);
+
+      const mark = el("button", "mark" + (savedSet().has(key) ? " on" : ""));
+      mark.type = "button";
+      mark.innerHTML = ICON_MARK;
+      mark.setAttribute("aria-label", savedSet().has(key) ? "取消收藏" : "收藏");
+      mark.addEventListener("click", () => {
+        const next = savedSet();
+        if (next.has(key)) next.delete(key); else next.add(key);
+        storeSaved(next);
+        if (view === "explore") {
+          mark.classList.toggle("on", next.has(key));
+          mark.setAttribute("aria-label", next.has(key) ? "取消收藏" : "收藏");
+        } else {
+          render();
+        }
+      });
+
+      const actions = el("div", "card-actions");
+      const source = item.official_url || (item.sources[0] && item.sources[0].url);
+      if (source) {
+        const link = el("a");
+        link.href = source;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        link.innerHTML = ICON_DOC;
+        link.append("官方招生资料");
+        link.insertAdjacentHTML("beforeend", ICON_OUT);
+        actions.appendChild(link);
+      } else {
+        actions.appendChild(el("span"));
+      }
+      const more = el("a");
+      more.href = "/browse/intakes/" + shown.intake_id;
+      more.append("查看详情");
+      more.insertAdjacentHTML("beforeend", ICON_ARROW);
+      actions.appendChild(more);
+      card.append(main, mark, actions);
+
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("a, button, select")) return;
+        if (view === "compare") {
+          if (compareKeys.has(key)) compareKeys.delete(key);
+          else if (compareKeys.size < 4) compareKeys.add(key);
+          card.classList.toggle("in-compare", compareKeys.has(key));
+          showCompareQa();
+          return;
+        }
+        selectGroup(key);
+      });
+      card.addEventListener("mouseenter", () => atlas.hover(item.university_name));
+      card.addEventListener("mouseleave", () => atlas.hover(null));
+      return card;
+    }
+    function flip(host, build) {
+      const before = new Map();
+      for (const node of host.children) if (node.dataset.key) before.set(node.dataset.key, node.getBoundingClientRect());
+      build();
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      let fresh = 0;
+      for (const node of host.children) {
+        if (!node.dataset.key) continue;
+        const old = before.get(node.dataset.key);
+        const now = node.getBoundingClientRect();
+        if (old) {
+          const dx = old.left - now.left;
+          const dy = old.top - now.top;
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+            node.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 360, easing: "cubic-bezier(.2,.8,.2,1)" });
+          }
+        } else if (before.size && now.top < innerHeight + 200) {
+          node.animate([{ opacity: 0, transform: "translateY(10px) scale(.985)" }, { opacity: 1, transform: "none" }],
+            { duration: 280, delay: Math.min(fresh++, 6) * 30, easing: "ease-out", fill: "backwards" });
+        }
+      }
+    }
+    function sortedGroups(list) {
+      const groups = groupsOf(list);
+      const sort = document.getElementById("sort").value;
+      groups.sort((a, b) => {
+        const x = a[1][0];
+        const y = b[1][0];
+        if (sort === "country") return label(COUNTRIES, x.country_code).localeCompare(label(COUNTRIES, y.country_code), "zh") || zhUni(x).localeCompare(zhUni(y), "zh");
+        if (sort === "year") return b[1][b[1].length - 1].admission_year - a[1][a[1].length - 1].admission_year || zhUni(x).localeCompare(zhUni(y), "zh");
+        return zhUni(x).localeCompare(zhUni(y), "zh") || zhProg(x).localeCompare(zhProg(y), "zh");
+      });
+      return groups;
+    }
+    function renderCards() {
+      const host = document.getElementById("cards");
+      const groups = sortedGroups(filteredItems());
+      document.getElementById("list-title").textContent = view === "compare" ? "项目对比" : view === "saved" ? "我的收藏" : "项目列表";
+      document.getElementById("list-count").textContent = groups.length + " 个项目";
+      const toggle = document.getElementById("compare-toggle");
+      toggle.hidden = view === "explore";
+      toggle.classList.toggle("on", view === "compare");
+      toggle.textContent = view === "compare" ? "退出对比" : "对比收藏";
+      flip(host, () => {
+        host.replaceChildren();
+        if (!groups.length) {
+          host.appendChild(el("p", "empty", view === "explore" ? "没有符合条件的项目。" : "还没有收藏。在项目卡片右上角点收藏，至少留下两个就能对比。"));
+          return;
+        }
+        for (const [key, rows] of groups) host.appendChild(cardFor(rows, key));
+      });
+      atlas.update(groups);
+    }
+    function render() {
+      renderActiveFilters();
+      if (view === "compare") showCompareQa();
+      renderCards();
+    }
+
+    /* ---------- map ---------- */
+    const atlas = (() => {
+      const REGIONS = [
+        { name: "北美", uni: "Massachusetts Institute of Technology" },
+        { name: "欧洲", uni: "University of Cambridge" },
+        { name: "亚洲", uni: "The University of Tokyo" },
+        { name: "大洋洲", uni: "University of Melbourne" },
+      ];
+      const COUNTRY_REPS = {
+        US: "Massachusetts Institute of Technology", GB: "University of Cambridge", JP: "The University of Tokyo",
+        CA: "University of Toronto", AU: "University of Melbourne", DE: "Technical University of Munich", FR: "Université PSL",
+        CH: "ETH Zürich", NL: "Delft University of Technology", SE: "KTH Royal Institute of Technology", DK: "University of Copenhagen",
+        KR: "Seoul National University", HK: "University of Hong Kong", SG: "National University of Singapore", IE: "Trinity College Dublin",
+        NZ: "University of Auckland", IT: "Politecnico di Milano", ES: "University of Barcelona", FI: "University of Helsinki",
+        BE: "KU Leuven", AT: "University of Vienna", PT: "University of Lisbon", NO: "University of Oslo",
+      };
+      const WORLD = [[-47, -128], [66, 160]];
+      const schools = Object.entries(typeof UNIVERSITY_GEO === "undefined" ? {} : UNIVERSITY_GEO)
+        .map(([name, [lat, lon, country]]) => ({ name, lat, lon, country }));
+      const byName = new Map(schools.map((school) => [school.name, school]));
+      let map = null;
+      let layer = null;
+      let focusLayer = null;
+      let countries = null;
+      let active = new Map();
+      let lit = new Set();
+      let hoverName = null;
+      let lastFit = "";
+
+      function init() {
+        if (typeof L === "undefined") return;
+        map = L.map("map", {
+          zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.75, minZoom: 0.75, maxZoom: 10,
+          scrollWheelZoom: false, worldCopyJump: false, maxBounds: [[-75, -220], [85, 220]], attributionControl: true,
+        });
+        map.attributionControl.setPrefix(false);
+        map.attributionControl.addAttribution("Natural Earth · Wikidata · OpenStreetMap");
+        map.fitBounds(WORLD);
+        map.setMinZoom(Math.max(0.5, map.getZoom() - 0.25));
+        layer = L.layerGroup().addTo(map);
+        focusLayer = L.layerGroup().addTo(map);
+        map.on("zoomend moveend", draw);
+        map.on("click", () => map.scrollWheelZoom.enable());
+        map.getContainer().addEventListener("mouseleave", () => map.scrollWheelZoom.disable());
+        document.getElementById("zoom-in").addEventListener("click", () => map.zoomIn());
+        document.getElementById("zoom-out").addEventListener("click", () => map.zoomOut());
+        document.getElementById("zoom-world").addEventListener("click", () => map.flyToBounds(WORLD, { duration: .6 }));
+        fetch("/static/vendor/world.json").then((response) => response.json()).then((geo) => {
+          countries = L.geoJSON(geo, { style: countryStyle, interactive: false }).addTo(map);
+          countries.bringToBack();
+        }).catch(() => {});
+      }
+      function countryStyle(feature) {
+        const on = lit.has(feature.properties.iso);
+        return { fillColor: on ? "#f7cfb2" : "#e8e0d7", fillOpacity: 1, color: "#f6f2ed", weight: .6 };
+      }
+      function tier() {
+        const zoom = map.getZoom();
+        if (lit.size && zoom >= 1.75) return "school";
+        return zoom < 2.25 ? "region" : zoom < 3.25 ? "country" : "school";
+      }
+      function tagHtml(text, nameEn, strong) {
+        const src = crestSrc(nameEn);
+        const img = src ? `<img src="${src}" alt="">` : "";
+        const span = document.createElement("span");
+        span.textContent = text || "";
+        const head = strong ? `<b>${strong}</b>` + (text ? " · " : "") : "";
+        return `<span class="tag">${img}${head}${span.innerHTML}</span>`;
+      }
+      function tooltipHtml(school) {
+        const count = active.get(school.name) || 0;
+        const src = crestSrc(school.name);
+        const wrap = document.createElement("div");
+        wrap.className = "tip";
+        if (src) { const img = document.createElement("img"); img.src = src; img.alt = ""; wrap.appendChild(img); }
+        const text = document.createElement("div");
+        text.append(label(UNIVERSITIES, school.name));
+        text.appendChild(el("small", "", label(COUNTRIES, school.country) + (count ? " · " + count + " 个项目" : " · 暂无列出的项目")));
+        wrap.appendChild(text);
+        return wrap;
+      }
+      function pin(school, text, strong, classes) {
+        return L.marker([school.lat, school.lon], {
+          icon: L.divIcon({ className: "", html: `<div class="pin ${classes}"><span class="dot"></span>${(text || strong) ? tagHtml(text, school.name, strong) : ""}</div>`, iconSize: [0, 0] }),
+          keyboard: false,
+        });
+      }
+      function candidates() {
+        const mode = tier();
+        if (mode === "region") {
+          return REGIONS.map((region) => ({ school: byName.get(region.uni), text: "", strong: region.name, rank: 0 }))
+            .filter((entry) => entry.school);
+        }
+        if (mode === "country") {
+          const codes = [...new Set(schools.map((school) => school.country))];
+          return codes.map((code) => {
+            const rep = byName.get(COUNTRY_REPS[code]) || schools.find((school) => school.country === code && active.has(school.name))
+              || schools.find((school) => school.country === code);
+            const count = schools.filter((school) => school.country === code).length;
+            return { school: rep, text: label(UNIVERSITIES, rep.name), strong: label(COUNTRIES, code), rank: -count };
+          });
+        }
+        const bounds = map.getBounds().pad(0.05);
+        return schools.filter((school) => bounds.contains([school.lat, school.lon]))
+          .map((school) => ({
+            school, text: label(UNIVERSITIES, school.name),
+            rank: (active.has(school.name) ? 0 : 2) + (lit.size && !lit.has(school.country) ? 1 : 0),
+          }));
+      }
+      function draw() {
+        if (!map) return;
+        layer.clearLayers();
+        const mode = tier();
+        document.getElementById("map-tier").textContent =
+          mode === "region" ? "各大洲代表学校 · 放大查看该地区分布" : mode === "country" ? "各国代表学校" : "当前范围内的学校分布";
+        const size = map.getSize();
+        const placed = [
+          { x1: size.x - 170, x2: size.x, y1: 0, y2: 46 },
+          { x1: 0, x2: 330, y1: size.y - 36, y2: size.y },
+        ];
+        const shown = new Set();
+        const list = candidates().sort((a, b) => a.rank - b.rank);
+        const labelled = [];
+        for (const entry of list) {
+          const point = map.latLngToContainerPoint([entry.school.lat, entry.school.lon]);
+          const text = (entry.strong ? entry.strong + " · " : "") + entry.text;
+          const width = 30 + [...text].reduce((sum, ch) => sum + (ch.charCodeAt(0) > 255 ? 11 : 6.2), 0);
+          const sides = [
+            ["", point.x + 9, point.y - 12],
+            ["flip", point.x - 9 - width, point.y - 12],
+            ["above", point.x - width / 2, point.y - 38],
+            ["below", point.x - width / 2, point.y + 12],
+          ];
+          let side = null;
+          for (const [name, x, y] of sides) {
+            const box = { x1: x, x2: x + width, y1: y, y2: y + 24 };
+            const outside = box.x1 < 0 || box.x2 > size.x || box.y1 < 0 || box.y2 > size.y;
+            if (outside || placed.some((other) => box.x1 < other.x2 && box.x2 > other.x1 && box.y1 < other.y2 && box.y2 > other.y1)) continue;
+            side = { name, box };
+            break;
+          }
+          const roomy = mode !== "school" || labelled.length < 14;
+          const force = mode === "region";
+          const showLabel = force || (Boolean(side) && roomy);
+          if (showLabel && side) { placed.push(side.box); labelled.push(entry.school.name); }
+          else if (showLabel && !side) { labelled.push(entry.school.name); side = { name: "", box: null }; }
+          shown.add(entry.school.name);
+          const on = lit.size ? lit.has(entry.school.country) : active.has(entry.school.name);
+          const classes = [on || mode !== "school" ? "" : "dim", lit.has(entry.school.country) ? "lit" : "", showLabel ? side.name : ""].join(" ");
+          const marker = pin(entry.school, showLabel ? entry.text : "", showLabel ? entry.strong : "", classes);
+          marker.bindTooltip(tooltipHtml(entry.school), { className: "uni-tip", direction: "top", offset: [0, -8] });
+          marker.on("click", () => pick(entry.school));
+          layer.addLayer(marker);
+        }
+        if (mode !== "school") {
+          for (const school of schools) {
+            if (shown.has(school.name)) continue;
+            const on = lit.has(school.country) || (!lit.size && active.has(school.name));
+            const dot = L.circleMarker([school.lat, school.lon], {
+              radius: on ? 3 : 2, stroke: false, fillColor: on ? "#e8692a" : "#c9b8a8", fillOpacity: on ? .75 : .55,
+            });
+            dot.bindTooltip(tooltipHtml(school), { className: "uni-tip", direction: "top", offset: [0, -4] });
+            dot.on("click", () => pick(school));
+            layer.addLayer(dot);
+          }
+        }
+        drawFocus();
+      }
+      function drawFocus() {
+        focusLayer.clearLayers();
+        const school = hoverName && byName.get(hoverName);
+        if (!school) return;
+        focusLayer.addLayer(L.marker([school.lat, school.lon], {
+          icon: L.divIcon({ className: "", html: `<div class="pin lit"><span class="ring"></span><span class="dot"></span>${tagHtml(label(UNIVERSITIES, school.name), school.name)}</div>`, iconSize: [0, 0] }),
+          interactive: false, zIndexOffset: 1000,
+        }));
+      }
+      function pick(school) {
+        if (!active.has(school.name)) return;
+        document.getElementById("query").value = label(UNIVERSITIES, school.name);
+        render();
+        document.querySelector(".list").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      function update(groups) {
+        if (!map) return;
+        active = new Map();
+        for (const [, rows] of groups) active.set(rows[0].university_name, (active.get(rows[0].university_name) || 0) + 1);
+        lit = new Set(checkedCountries());
+        if (countries) countries.setStyle(countryStyle);
+        const fitKey = [...lit].sort().join(",");
+        if (fitKey !== lastFit) {
+          lastFit = fitKey;
+          const points = schools.filter((school) => lit.has(school.country)).map((school) => [school.lat, school.lon]);
+          if (points.length) map.flyToBounds(L.latLngBounds(points).pad(0.35), { maxZoom: 5.5, duration: .7 });
+          else map.flyToBounds(WORLD, { duration: .7 });
+          return;
+        }
+        draw();
+      }
+      function hover(name) {
+        hoverName = name;
+        if (map) drawFocus();
+      }
+      init();
+      return { update, hover, redraw: draw };
+    })();
+
+    /* ---------- QA panel ---------- */
+    function currentGroup() {
+      if (!selectedKey) return null;
+      return groupsOf(items).find(([key]) => key === selectedKey) || null;
+    }
+    function setFine(text) { document.querySelector("#fine span").textContent = text; }
+    function chipSelect(kind, options, value, onChange) {
+      const select = el("select", "chip-select " + kind);
+      for (const [text, val] of options) select.append(new Option(text, val));
+      if (value != null) select.value = value;
+      select.disabled = options.length < 2;
+      if (onChange) select.addEventListener("change", () => onChange(select.value));
+      return select;
+    }
+    function renderQaHead() {
+      const who = document.getElementById("qa-who");
+      who.replaceChildren();
+      who.classList.remove("swap");
+      void who.offsetWidth;
+      who.classList.add("swap");
+      if (view === "compare") {
+        const groups = selectedCompareGroups();
+        who.appendChild(el("span", "who", groups.length >= 2 ? "正在对比 " + groups.length + " 个项目" : "在列表里点选 2 到 4 个收藏的项目"));
+        return;
+      }
+      const group = currentGroup();
+      if (!group) {
+        who.appendChild(el("span", "who", "尚未选择项目"));
+        return;
+      }
+      const rows = group[1];
+      const item = rows[0];
+      const shown = shownRow(rows);
+      who.appendChild(el("span", "who", zhUni(item) + " · " + zhProg(item)));
+      who.appendChild(chipSelect("when", rows.map((row) => [monthText(row), String(row.intake_id)]), String(shown.intake_id), (value) => {
+        chosenIntake = value;
+        selectGroup(selectedKey);
+      }));
+      const labels = [...new Set(rows.map((row) => row.intake_label).filter(Boolean))];
+      const modes = labels.length ? labels.map((text) => [text, text]) : [["选拔方式未标注", ""]];
+      who.appendChild(chipSelect("mode", modes, shown.intake_label || "", (value) => {
+        const match = rows.find((row) => row.intake_label === value);
+        if (match) { chosenIntake = String(match.intake_id); selectGroup(selectedKey); }
+      }));
+    }
+    function guideTurn(question, guide) {
+      const log = document.getElementById("log");
+      if (question) {
+        const bubble = el("button", "msg-user");
+        bubble.type = "button";
+        bubble.dataset.q = question;
+        bubble.append(el("small", "", "试着问"), document.createTextNode(question));
+        log.appendChild(bubble);
+      }
+      const row = el("div", "msg-bot");
+      const avatar = el("div", "bot-avatar");
+      avatar.innerHTML = BOT_AVATAR;
+      const bubble = el("div", "bot-bubble");
+      bubble.appendChild(el("p", "", guide));
+      bubble.appendChild(el("span", "guide-tag", "使用说明"));
+      row.append(avatar, bubble);
+      log.appendChild(row);
+    }
+    function chipRow(questions) {
+      const box = el("div", "chips");
+      for (const question of questions) {
+        const button = el("button", "ask-chip", question);
+        button.type = "button";
+        button.dataset.q = question;
+        box.appendChild(button);
+      }
+      return box;
+    }
+    function sourceCard(detail) {
+      const links = [];
+      if (detail.official_url) links.push({ title: "项目页", type: "官网", url: detail.official_url });
+      for (const source of detail.sources || []) links.push({ title: source.title || label(SOURCE_TYPES, source.source_type), type: label(SOURCE_TYPES, source.source_type), url: source.url });
+      const seen = new Set();
+      const card = el("div", "src-card");
+      card.appendChild(el("h3", "", "官方来源"));
+      for (const link of links) {
+        if (seen.has(link.url)) continue;
+        seen.add(link.url);
+        const row = el("div", "src-row");
+        const icon = el("span", "doc-ico", /\.pdf($|\?)/i.test(link.url) ? "PDF" : "WEB");
+        const text = el("div");
+        text.append(el("strong", "", link.title));
+        text.append(el("small", "", link.type + " · " + new URL(link.url).hostname));
+        const anchor = el("a");
+        anchor.href = link.url;
+        anchor.target = "_blank";
+        anchor.rel = "noreferrer";
+        anchor.append("查看官网");
+        anchor.insertAdjacentHTML("beforeend", ICON_OUT);
+        row.append(icon, text, anchor);
+        card.appendChild(row);
+      }
+      if (!seen.size) card.appendChild(el("small", "", "这一季没有保存官网链接。"));
+      return card;
+    }
+    function showSingleEmpty() {
+      renderQaHead();
+      setFine(SINGLE_FINE);
+      const log = document.getElementById("log");
+      log.replaceChildren();
+      lastTurn = null;
+      guideTurn("申请需要准备哪些材料？", "先在左侧列表选择一个项目，再选定入学季与选拔方式。回答只根据这一季的官方原文，并标出对应依据。");
+    }
+    async function selectGroup(key) {
+      const changed = key !== selectedKey;
+      selectedKey = key;
+      if (changed) {
+        const rows = groupsOf(items).find(([groupKeyValue]) => groupKeyValue === key);
+        if (rows && !rows[1].some((row) => String(row.intake_id) === String(chosenIntake))) chosenIntake = String(rows[1][rows[1].length - 1].intake_id);
+      }
+      for (const card of document.querySelectorAll("#cards .card")) card.classList.toggle("selected", card.dataset.key === key);
+      const group = currentGroup();
+      if (!group) return showSingleEmpty();
+      const shown = shownRow(group[1]);
+      chosenIntake = String(shown.intake_id);
+      const card = [...document.querySelectorAll("#cards .card")].find((node) => node.dataset.key === key);
+      if (card) {
+        const fresh = cardFor(group[1], key);
+        card.replaceWith(fresh);
+      }
+      renderQaHead();
+      setFine(SINGLE_FINE);
+      if (activeRequest) activeRequest.abort();
+      const log = document.getElementById("log");
+      log.replaceChildren();
+      lastTurn = null;
+      guideTurn(null, "已选定 " + zhUni(shown) + " · " + monthText(shown) + "。直接提问，或点下面的问题。回答会标出 [1] 这样的原文编号，点开可看原文和页码。");
+      const slot = el("div");
+      log.append(slot, chipRow(SINGLE_CHIPS));
+      const response = await fetch("/intakes/" + shown.intake_id);
+      if (!response.ok || String(chosenIntake) !== String(shown.intake_id)) return;
+      const detail = await response.json();
+      if (String(chosenIntake) !== String(shown.intake_id)) return;
+      slot.replaceWith(sourceCard(detail));
+    }
+    function chosenCompareGroups() {
+      const keys = savedSet();
+      return groupsOf(items).filter(([key]) => keys.has(key));
+    }
+    function selectedCompareGroups() {
+      const byKey = new Map(chosenCompareGroups());
+      return [...compareKeys].filter((key) => byKey.has(key)).slice(0, 4).map((key) => [key, byKey.get(key)]);
+    }
+    function compareIntake(rows) {
+      const verified = rows.filter((row) => row.verified);
+      const pool = verified.length ? verified : rows;
+      return pool[pool.length - 1];
+    }
+    function showCompareQa() {
+      renderQaHead();
+      setFine(COMPARE_FINE);
+      const groups = selectedCompareGroups();
+      const log = document.getElementById("log");
+      if (lastTurn && lastTurn.compare) return;
+      log.replaceChildren();
+      lastTurn = null;
+      if (groups.length < 2) {
+        guideTurn(null, "在列表里点选至少两个收藏的项目。每个问题会分别检索这些项目的官网原文，再说明差别。");
+        return;
+      }
+      guideTurn(null, "将对比：" + groups.map(([, rows]) => zhUni(rows[0]) + " · " + zhProg(rows[0]) + "（" + monthText(compareIntake(rows)) + "）").join("；"));
+      log.appendChild(chipRow(COMPARE_CHIPS));
+    }
+
+    /* ---------- streaming answers ---------- */
+    const STAGES = {
+      retrieving: ["retrieving", '<i class="spin"></i>检索中 · 正在查找官网原文'],
+      answering: ["answering", '<span class="dots"><i></i><i></i><i></i></span>回答中'],
+      done: ["done", "✓ 已回答"],
+      limited: ["limited", "资料不足"],
+      error: ["error", "! 回答失败"],
+    };
+    function setStage(turn, stage, extra) {
+      const [cls, html] = STAGES[stage];
+      turn.stage.className = "stage " + cls;
+      turn.stage.innerHTML = html;
+      if (extra) turn.stage.append(" · " + extra);
+      turn.state = stage;
+    }
+    function newTurn(question, compare) {
+      const log = document.getElementById("log");
+      for (const node of log.querySelectorAll(".chips, .msg-user[data-q]")) node.remove();
+      const user = el("div", "msg-user", question);
+      const row = el("div", "msg-bot");
+      const avatar = el("div", "bot-avatar");
+      avatar.innerHTML = BOT_AVATAR;
+      const bubble = el("div", "bot-bubble");
+      const stage = el("span", "stage");
+      const body = el("div", "answer");
+      const skeleton = el("div", "skeleton");
+      skeleton.append(el("i"), el("i"), el("i"));
+      body.appendChild(skeleton);
+      bubble.append(stage, body);
+      row.append(avatar, bubble);
+      const cites = el("div", "cites");
+      log.append(user, row, cites);
+      const turn = { question, compare, bubble, stage, body, cites, text: "", citations: [], cards: [], frame: 0, state: "" };
+      row.__turn = turn;
+      setStage(turn, "retrieving");
+      lastTurn = turn;
+      scrollLog();
+      return turn;
+    }
+    function scrollLog() {
+      const log = document.getElementById("log");
+      log.scrollTop = log.scrollHeight;
+    }
+    function linkCitations(turn) {
+      const walker = document.createTreeWalker(turn.body, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) if (/\[\d+\]/.test(walker.currentNode.nodeValue)) nodes.push(walker.currentNode);
+      for (const node of nodes) {
+        const frag = document.createDocumentFragment();
+        let last = 0;
+        const text = node.nodeValue;
+        for (const match of text.matchAll(/\[(\d+)\]/g)) {
+          const n = Number(match[1]);
+          if (!turn.citations[n - 1]) continue;
+          frag.append(text.slice(last, match.index));
+          const button = el("button", "cite", String(n));
+          button.type = "button";
+          button.dataset.n = String(n);
+          button.title = "查看原文依据 [" + n + "]";
+          frag.appendChild(button);
+          last = match.index + match[0].length;
+        }
+        frag.append(text.slice(last));
+        node.replaceWith(frag);
+      }
+    }
+    function paintAnswer(turn, streaming) {
+      renderMarkdown(turn.body, turn.text);
+      linkCitations(turn);
+      if (streaming) {
+        const tail = turn.body.lastElementChild && turn.body.lastElementChild.matches("ul, ol") ? turn.body.lastElementChild.lastElementChild : turn.body.lastElementChild;
+        (tail || turn.body).appendChild(el("span", "caret"));
+      }
+      scrollLog();
+    }
+    function schedulePaint(turn) {
+      if (turn.frame) return;
+      turn.frame = requestAnimationFrame(() => { turn.frame = 0; paintAnswer(turn, true); });
+    }
+    function pageText(citation) {
+      if (citation.page_start == null) return "网页原文 · 无页码";
+      if (citation.page_end != null && citation.page_end !== citation.page_start) return "第 " + citation.page_start + "–" + citation.page_end + " 页";
+      return "第 " + citation.page_start + " 页";
+    }
+    function renderCitations(turn) {
+      turn.cites.replaceChildren();
+      turn.cards = turn.citations.map((citation, index) => {
+        const card = el("div", "cite-card");
+        const row = el("button", "cite-row");
+        row.type = "button";
+        const isPdf = citation.page_start != null || /\.pdf($|\?)/i.test(citation.source_url);
+        const icon = el("span", "doc-ico", isPdf ? "PDF" : "WEB");
+        const text = el("div");
+        const title = el("strong");
+        title.append(el("span", "n", "[" + (index + 1) + "]"), document.createTextNode(
+          (citation.university_name ? label(UNIVERSITIES, citation.university_name) + " · " : "") + (citation.document_title || "官方招生资料")));
+        text.append(title, el("small", "", pageText(citation) + (citation.heading_path ? " · " + citation.heading_path : "")));
+        row.append(icon, text);
+        row.insertAdjacentHTML("beforeend", ICON_CHEV);
+        const body = el("div", "cite-body");
+        const tools = el("div", "cite-tools");
+        const where = el("span", "", "原文依据 [" + (index + 1) + "] · " + pageText(citation));
+        const link = el("a");
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        link.append(isPdf && citation.page_start != null ? "打开第 " + citation.page_start + " 页" : "查看官网");
+        link.insertAdjacentHTML("beforeend", ICON_OUT);
+        tools.append(where, link);
+        const quote = el("p", "quote");
+        body.append(tools, quote);
+        card.append(row, body);
+        row.addEventListener("click", () => openCitation(turn, index + 1, null, true));
+        turn.cites.appendChild(card);
+        const entry = { card, quote, link, citation };
+        showQuote(entry, []);
+        return entry;
+      });
+    }
+    const MONTHS_EN = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+    const STOP = new Set(["the", "and", "for", "with", "you", "are", "of", "to", "in", "or", "on", "at", "by", "be", "is", "an", "as"]);
+    function cueTerms(sentence) {
+      const terms = new Set();
+      const plain = sentence.replace(/\[\d+\]/g, " ");
+      for (const match of plain.matchAll(/\d+(?:[.:]\d+)?/g)) terms.add(match[0]);
+      for (const match of plain.matchAll(/[A-Za-z][A-Za-z+\-]{1,}/g)) {
+        const word = match[0].toLowerCase();
+        if (!STOP.has(word)) terms.add(word);
+      }
+      for (const match of plain.matchAll(/(\d{1,2})\s*月/g)) {
+        const name = MONTHS_EN[Number(match[1]) - 1];
+        if (name) { terms.add(name); terms.add(name.slice(0, 3)); }
+      }
+      return terms;
+    }
+    function splitSentences(text) {
+      const parts = [];
+      const push = (start, end) => {
+        while (start < end && /\s/.test(text[start])) start += 1;
+        if (start < end) parts.push({ start, end });
+      };
+      const boundary = /[.!?;](?=\s|$)|[。！？；]|\n/g;
+      let start = 0;
+      let match;
+      while ((match = boundary.exec(text))) {
+        push(start, match.index + 1);
+        start = match.index + 1;
+      }
+      push(start, text.length);
+      return parts;
+    }
+    function rankSentences(text, cue) {
+      if (!cue) return [];
+      const terms = cueTerms(cue);
+      if (!terms.size) return [];
+      const scored = splitSentences(text).map((part) => {
+        const piece = text.slice(part.start, part.end).toLowerCase();
+        const tokens = new Set(piece.match(/\d+(?:[.:]\d+)?|[a-z][a-z+\-]{1,}/g) || []);
+        let score = 0;
+        for (const term of terms) if (tokens.has(term)) score += /^\d/.test(term) ? 2 : 1;
+        return { ...part, score };
+      });
+      const best = Math.max(0, ...scored.map((part) => part.score));
+      if (best < 2) return [];
+      return scored.filter((part) => part.score >= Math.max(2, best - 1)).sort((a, b) => b.score - a.score).slice(0, 3);
+    }
+    function showQuote(entry, marks) {
+      const { quote, link, citation } = entry;
+      const text = citation.text;
+      quote.replaceChildren();
+      const sorted = [...marks].sort((a, b) => a.start - b.start);
+      let last = 0;
+      for (const part of sorted) {
+        if (part.start < last) continue;
+        quote.append(text.slice(last, part.start));
+        quote.appendChild(el("mark", "", text.slice(part.start, part.end)));
+        last = part.end;
+      }
+      quote.append(text.slice(last));
+      let href = citation.source_url;
+      if (!href.includes("#")) {
+        if (citation.page_start != null) href += "#page=" + citation.page_start;
+        else if (sorted.length) {
+          const words = text.slice(sorted[0].start, sorted[0].end).trim().split(/\s+/).slice(0, 8).join(" ");
+          if (words) href += "#:~:text=" + encodeURIComponent(words);
+        }
+      }
+      link.href = href;
+    }
+    function sentenceAround(button) {
+      const block = button.closest("p, li") || button.parentElement;
+      let before = "";
+      let after = "";
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (node.parentElement.closest(".cite")) continue;
+        if (button.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING) after += node.nodeValue;
+        else before += node.nodeValue;
+      }
+      const ends = /[。！？；\n]\s*$/.test(before);
+      const head = before.split(/[。！？；\n]/).map((part) => part.trim()).filter(Boolean).pop() || "";
+      return ends ? head : head + after.split(/[。！？；\n]/)[0];
+    }
+    function openCitation(turn, n, button, toggle) {
+      const entry = turn.cards[n - 1];
+      if (!entry) return;
+      const wasOpen = entry.card.classList.contains("open");
+      for (const other of turn.cards) other.card.classList.remove("open");
+      for (const cite of turn.body.querySelectorAll(".cite.on")) cite.classList.remove("on");
+      if (toggle && wasOpen) return;
+      entry.card.classList.add("open");
+      if (button) button.classList.add("on");
+      const cue = button ? sentenceAround(button) : turn.text;
+      const marks = rankSentences(entry.citation.text, cue);
+      showQuote(entry, marks);
+      const log = document.getElementById("log");
+      const top = entry.card.offsetTop - log.offsetTop - 8;
+      log.scrollTo({ top, behavior: "smooth" });
+      const first = entry.quote.querySelector("mark");
+      if (first) entry.quote.scrollTop = Math.max(0, first.offsetTop - entry.quote.offsetTop - 12);
+    }
+    function failTurn(turn, message, retry) {
+      if (turn.frame) cancelAnimationFrame(turn.frame);
+      setStage(turn, "error");
+      turn.bubble.classList.add("failed");
+      const hadText = Boolean(turn.text.trim());
+      if (hadText) paintAnswer(turn, false); else turn.body.replaceChildren();
+      turn.body.appendChild(el("p", "", hadText ? "回答中途中断：" + message : message));
+      const again = el("button", "retry", "重试");
+      again.type = "button";
+      again.addEventListener("click", retry);
+      turn.body.appendChild(again);
+      scrollLog();
+    }
+    function handleEvent(turn, event) {
+      if (event.event === "retrieving") setStage(turn, "retrieving");
+      else if (event.event === "citations") {
+        turn.citations = event.citations || [];
+        renderCitations(turn);
+        setStage(turn, "retrieving", "找到 " + turn.citations.length + " 段原文");
+      } else if (event.event === "answering") {
+        setStage(turn, "answering");
+        turn.body.replaceChildren();
+      } else if (event.event === "delta") {
+        if (turn.state !== "answering") { setStage(turn, "answering"); turn.body.replaceChildren(); }
+        turn.text += event.text;
+        schedulePaint(turn);
+      } else if (event.event === "done") {
+        if (turn.frame) { cancelAnimationFrame(turn.frame); turn.frame = 0; }
+        setStage(turn, "done", turn.citations.length + " 条原文依据");
+        paintAnswer(turn, false);
+        return "end";
+      } else if (event.event === "final") {
+        if (event.status === "answered") setStage(turn, "done");
+        else setStage(turn, "limited", event.status === "sample" ? "样例入学季" : "原文里没有相关内容");
+        turn.text = event.answer || "";
+        turn.citations = event.citations || [];
+        renderCitations(turn);
+        paintAnswer(turn, false);
+        return "end";
+      } else if (event.event === "error") {
+        return { error: event.message || "回答没有完成。" };
+      }
+      return null;
+    }
+    async function ask(question) {
+      const text = String(question || "").trim();
+      if (!text) return;
+      const comparing = view === "compare";
+      const groups = comparing ? selectedCompareGroups() : [];
+      if (comparing && groups.length < 2) return;
+      if (!comparing && !currentGroup()) {
+        showSingleEmpty();
+        document.querySelector(".list").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      const intakeId = comparing ? null : shownRow(currentGroup()[1]).intake_id;
+      document.getElementById("ask-input").value = "";
+      if (activeRequest) activeRequest.abort();
+      const controller = new AbortController();
+      activeRequest = controller;
+      const turn = newTurn(text, comparing);
+      const retry = () => ask(text);
+      const send = document.getElementById("send");
+      send.disabled = true;
+      try {
+        const response = await fetch(comparing ? "/intakes/compare/stream" : "/intakes/" + intakeId + "/ask/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(comparing ? { question: text, intake_ids: groups.map(([, rows]) => compareIntake(rows).intake_id) } : { question: text }),
+          signal: controller.signal,
+        });
+        if (!response.ok || !response.body) {
+          const payload = await response.json().catch(() => ({}));
+          const detail = Array.isArray(payload.detail) ? "问题需要 1 到 500 个字。" : payload.detail;
+          failTurn(turn, detail || "服务暂时不可用（" + response.status + "）。", retry);
+          return;
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let ended = false;
+        while (!ended) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let cut;
+          while ((cut = buffer.indexOf("\n")) >= 0) {
+            const line = buffer.slice(0, cut).trim();
+            buffer = buffer.slice(cut + 1);
+            if (!line) continue;
+            const result = handleEvent(turn, JSON.parse(line));
+            if (result === "end") ended = true;
+            else if (result && result.error) { failTurn(turn, result.error, retry); return; }
+          }
+        }
+        if (!ended) failTurn(turn, "连接中断，回答不完整。", retry);
+      } catch (error) {
+        if (error.name === "AbortError") { if (turn.state !== "done") failTurn(turn, "已切换项目，这次回答已停止。", retry); return; }
+        failTurn(turn, "网络连接失败，请检查后重试。", retry);
+      } finally {
+        if (activeRequest === controller) activeRequest = null;
+        send.disabled = false;
+      }
+    }
+
+    /* ---------- palette ---------- */
+    const palette = (() => {
+      const root = document.getElementById("palette");
+      const input = document.getElementById("palette-input");
+      const list = document.getElementById("palette-list");
+      let entries = [];
+      let index = 0;
+      let returnFocus = null;
+      function open() {
+        returnFocus = document.activeElement;
+        root.hidden = false;
+        input.value = document.getElementById("query").value;
+        refresh();
+        input.focus();
+        input.select();
+      }
+      function close() {
+        root.hidden = true;
+        if (returnFocus && returnFocus.focus) returnFocus.focus();
+      }
+      function score(blob, q) {
+        if (!q) return 1;
+        const at = blob.indexOf(q);
+        if (at < 0) return 0;
+        return at === 0 ? 3 : 2;
+      }
+      function refresh() {
+        const q = input.value.trim().toLowerCase();
+        const groups = groupsOf(items);
+        const programs = groups.map(([key, rows]) => ({ key, rows, s: score(searchBlob(rows[0]), q) })).filter((entry) => entry.s)
+          .sort((a, b) => b.s - a.s || zhUni(a.rows[0]).localeCompare(zhUni(b.rows[0]), "zh")).slice(0, q ? 8 : 6);
+        const unis = [...new Map(groups.map(([, rows]) => [rows[0].university_name, rows[0]])).values()]
+          .map((item) => ({ item, s: score([zhUni(item), item.university_name, item.city].join(" ").toLowerCase(), q) }))
+          .filter((entry) => entry.s).sort((a, b) => b.s - a.s).slice(0, q ? 5 : 0);
+        const codes = [...new Set(items.map((item) => item.country_code))]
+          .map((code) => ({ code, s: score((label(COUNTRIES, code) + " " + code).toLowerCase(), q) })).filter((entry) => entry.s).slice(0, q ? 4 : 6);
+        entries = [];
+        list.replaceChildren();
+        const section = (title) => list.appendChild(el("div", "palette-group", title));
+        const add = (iconNode, title, sub, hint, action) => {
+          const button = el("button", "palette-item");
+          button.type = "button";
+          button.setAttribute("role", "option");
+          const text = el("div");
+          text.append(el("strong", "", title), el("small", "", sub));
+          button.append(iconNode, text, el("span", "hint", hint));
+          const position = entries.length;
+          button.addEventListener("mousemove", () => { if (index !== position) { index = position; highlight(); } });
+          button.addEventListener("click", () => { close(); action(); });
+          entries.push({ button, action });
+          list.appendChild(button);
+        };
+        const glyph = (text) => el("span", "glyph", text);
+        const crestImg = (nameEn) => {
+          const src = crestSrc(nameEn);
+          if (!src) return glyph("校");
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = "";
+          return img;
+        };
+        if (programs.length) section("项目");
+        for (const { key, rows } of programs) {
+          const item = rows[0];
+          add(crestImg(item.university_name), zhUni(item) + " · " + zhProg(item), item.program_name + " · " + label(COUNTRIES, item.country_code), rows.length + " 个入学季", () => jumpTo(key));
+        }
+        if (unis.length) section("学校");
+        for (const { item } of unis) {
+          add(crestImg(item.university_name), zhUni(item), item.university_name + (item.city ? " · " + item.city : ""), "筛选", () => {
+            view = "explore";
+            syncNav();
+            document.getElementById("query").value = zhUni(item);
+            render();
+          });
+        }
+        if (codes.length) section("国家 / 地区");
+        for (const { code } of codes) {
+          add(glyph(code), label(COUNTRIES, code), "只看这个国家的项目", "筛选", () => {
+            for (const box of document.querySelectorAll("#countries input")) box.checked = box.value === code;
+            render();
+          });
+        }
+        if (!entries.length) list.appendChild(el("div", "palette-empty", "没有找到匹配的项目、学校或国家。"));
+        index = 0;
+        highlight();
+      }
+      function highlight() {
+        entries.forEach((entry, position) => entry.button.classList.toggle("active", position === index));
+        const current = entries[index];
+        if (current) current.button.scrollIntoView({ block: "nearest" });
+      }
+      input.addEventListener("input", refresh);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown") { event.preventDefault(); index = Math.min(entries.length - 1, index + 1); highlight(); }
+        else if (event.key === "ArrowUp") { event.preventDefault(); index = Math.max(0, index - 1); highlight(); }
+        else if (event.key === "Enter") { event.preventDefault(); const current = entries[index]; if (current) { close(); current.action(); } }
+        else if (event.key === "Escape") { event.preventDefault(); close(); }
+      });
+      root.addEventListener("mousedown", (event) => { if (event.target === root) close(); });
+      return { open, close, isOpen: () => !root.hidden };
+    })();
+    function jumpTo(key) {
+      const present = view !== "compare" && [...document.querySelectorAll("#cards .card")].some((node) => node.dataset.key === key);
+      if (!present) {
+        view = "explore";
+        syncNav();
+        document.getElementById("query").value = "";
+        document.getElementById("year").value = "";
+        document.getElementById("field").value = "";
+        for (const box of document.querySelectorAll("#countries input")) box.checked = false;
+        render();
+      }
+      selectGroup(key);
+      const target = [...document.querySelectorAll("#cards .card")].find((node) => node.dataset.key === key);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.classList.remove("flash");
+        void target.offsetWidth;
+        target.classList.add("flash");
+      }
+    }
+
+    /* ---------- wiring ---------- */
+    function syncNav() {
+      const tab = view === "explore" ? "explore" : "saved";
+      for (const button of document.querySelectorAll(".nav button[data-view]")) button.classList.toggle("active", button.dataset.view === tab);
+    }
+    async function load() {
+      await loadAccount();
+      const response = await fetch("/programs?" + languageParams().toString());
+      if (!response.ok) throw new Error("无法加载项目");
+      items = (await response.json()).items;
+      renderChoices();
+      render();
+      if (selectedKey && currentGroup()) selectGroup(selectedKey); else showSingleEmpty();
+    }
+    document.getElementById("search-form").addEventListener("submit", (event) => { event.preventDefault(); render(); });
+    let typing = 0;
+    document.getElementById("query").addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(render, 220); });
+    for (const id of ["sort", "year", "field", "countries"]) document.getElementById(id).addEventListener("change", render);
+    document.getElementById("reset").addEventListener("click", resetFilters);
+    document.getElementById("language-scores").addEventListener("change", (event) => {
+      const box = event.target;
+      if (box.type !== "checkbox") return;
+      const input = box.parentElement.querySelector("input[type=number]");
+      input.disabled = !box.checked;
+      if (!box.checked) { input.value = ""; load().catch(() => {}); }
+    });
+    document.getElementById("ask-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      ask(document.getElementById("ask-input").value);
+    });
+    document.getElementById("log").addEventListener("click", (event) => {
+      const cite = event.target.closest(".cite");
+      if (cite && lastTurn) {
+        const turnNode = cite.closest(".msg-bot");
+        const turn = turnNode && turnNode.__turn ? turnNode.__turn : lastTurn;
+        openCitation(turn, Number(cite.dataset.n), cite, false);
+        return;
+      }
+      const prompt = event.target.closest("[data-q]");
+      if (prompt) ask(prompt.dataset.q);
+    });
+    document.getElementById("toggle-cites").addEventListener("click", () => {
+      if (!lastTurn || !lastTurn.cards.length) return;
+      const allOpen = lastTurn.cards.every((entry) => entry.card.classList.contains("open"));
+      for (const entry of lastTurn.cards) {
+        entry.card.classList.toggle("open", !allOpen);
+        if (!allOpen) showQuote(entry, rankSentences(entry.citation.text, lastTurn.text));
+      }
+      if (!allOpen) lastTurn.cites.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    document.getElementById("compare-toggle").addEventListener("click", () => {
+      if (view === "compare") {
+        view = "saved";
+        lastTurn = null;
+        if (selectedKey && currentGroup()) selectGroup(selectedKey); else showSingleEmpty();
+      } else {
+        view = "compare";
+        const available = chosenCompareGroups().map(([key]) => key);
+        compareKeys = new Set([...compareKeys].filter((key) => available.includes(key)));
+        if (compareKeys.size < 2) compareKeys = new Set(available.slice(0, 4));
+        lastTurn = null;
+      }
+      render();
+    });
+    document.querySelector(".nav").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-view]");
+      if (!button) return;
+      const wasCompare = view === "compare";
+      view = button.dataset.view;
+      syncNav();
+      if (wasCompare) {
+        lastTurn = null;
+        if (selectedKey && currentGroup()) selectGroup(selectedKey); else showSingleEmpty();
+      }
+      render();
+    });
+    document.getElementById("logout").addEventListener("click", async () => {
+      await fetch("/auth/logout", { method: "POST" });
+      currentUser = null;
+      serverSaved = null;
+      compareKeys = new Set();
+      renderAccount();
+      render();
+    });
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    document.getElementById("kbd-hint").textContent = isMac ? "⌘ K" : "Ctrl K";
+    document.getElementById("open-palette").addEventListener("click", () => palette.open());
+    document.addEventListener("keydown", (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        if (palette.isOpen()) palette.close(); else palette.open();
+      }
+    });
+    const toTop = document.getElementById("to-top");
+    addEventListener("scroll", () => toTop.classList.toggle("show", scrollY > 420), { passive: true });
+    toTop.addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
+    load().catch((error) => {
+      document.getElementById("cards").textContent = error.message;
+    });
+  </script>
+</body>
+</html>

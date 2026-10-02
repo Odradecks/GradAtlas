@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GradAtlas 登录</title>
+  <style>
+    :root { color-scheme: light; --ink: #1a1a1a; --muted: #8a8178; --line: #efeae4; --bg: #f7f5f2; --red: #E36A22; --red-deep: #C45516; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", "Noto Sans SC", sans-serif; color: var(--ink); background: var(--bg); }
+    a { color: var(--red); text-decoration: none; }
+    .nav { display: flex; align-items: center; height: 60px; padding: 0 28px; background: #fff; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 700; text-decoration: none; }
+    main { max-width: 420px; margin: 48px auto; padding: 0 20px; }
+    h1 { margin: 0 0 8px; font-size: 1.7rem; }
+    p { margin: 0 0 16px; color: var(--muted); }
+    form, .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    label { display: block; margin: 12px 0 6px; font-size: 0.9rem; }
+    input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    button, .google { display: block; width: 100%; margin-top: 16px; padding: 11px 14px; border: 0; border-radius: 10px; background: var(--red); color: #fff; text-align: center; cursor: pointer; font: inherit; }
+    button:hover, .google:hover { background: var(--red-deep); }
+    .google { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .error { color: #b42318; min-height: 1.2em; margin-top: 12px; }
+    .switch { margin-top: 16px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="/browse">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.5 16 15.5H2Z" fill="#F15A00"/></svg>
+      GradAtlas
+    </a>
+  </header>
+  <main>
+    <h1 id="title">登录</h1>
+    <p id="lead">登录后，收藏会保存在你的账户里。</p>
+    <a class="google" id="google" href="/auth/google/start">使用谷歌账号继续</a>
+    <form id="form">
+      <label for="email">邮箱</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" minlength="8" autocomplete="current-password" required>
+      <div id="confirm-row" hidden>
+        <label for="confirm">再输入一次密码</label>
+        <input id="confirm" type="password" minlength="8" autocomplete="new-password">
+      </div>
+      <button type="submit" id="submit">登录</button>
+      <p class="error" id="error"></p>
+    </form>
+    <p class="switch" id="switch"></p>
+  </main>
+  <script>
+    const register = location.pathname === "/register";
+    const title = document.getElementById("title");
+    const lead = document.getElementById("lead");
+    const submit = document.getElementById("submit");
+    const confirmRow = document.getElementById("confirm-row");
+    const switcher = document.getElementById("switch");
+    document.getElementById("password").autocomplete = register ? "new-password" : "current-password";
+    if (register) {
+      title.textContent = "注册";
+      lead.textContent = "用邮箱注册。已有谷歌账号也可以直接继续。";
+      submit.textContent = "注册";
+      confirmRow.hidden = false;
+      switcher.innerHTML = '已有账户？<a href="/login">登录</a>';
+    } else {
+      switcher.innerHTML = '还没有账户？<a href="/register">注册</a>';
+    }
+    fetch("/auth/me").then((response) => response.json()).then((payload) => {
+      if (!payload.user) return;
+      lead.textContent = "当前账户：" + payload.user.email;
+      document.getElementById("form").hidden = true;
+      document.getElementById("google").hidden = true;
+      switcher.innerHTML = '<a href="/browse">返回项目</a>';
+    });
+    fetch("/auth/providers").then((response) => response.json()).then((payload) => {
+      if (!payload.google) document.getElementById("google").title = "尚未配置谷歌登录";
+    });
+    document.getElementById("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = document.getElementById("error");
+      error.textContent = "";
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      if (register && password !== document.getElementById("confirm").value) {
+        error.textContent = "两次密码不一致";
+        return;
+      }
+      const response = await fetch(register ? "/auth/register" : "/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        error.textContent = payload.detail || "没有完成";
+        return;
+      }
+      location.href = "/browse";
+    });
+  </script>
+</body>
+</html>

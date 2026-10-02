@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>入学季详情</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1a1a;
+      --muted: #666666;
+      --line: #e5e5e5;
+      --bg: #ffffff;
+      --card: #ffffff;
+      --accent: #F15A00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    main { max-width: 860px; margin: 0 auto; padding: 24px 20px 48px; }
+    a { color: var(--accent); }
+    h1 { font-size: 1.4rem; margin: 12px 0 4px; }
+    .meta { color: var(--muted); margin: 0 0 20px; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 28px rgba(241, 90, 0, 0.06);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    section:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(241, 90, 0, 0.12), 0 12px 28px rgba(241, 90, 0, 0.12);
+    }
+    h2 { font-size: 1rem; margin: 0 0 10px; }
+    dl { display: grid; grid-template-columns: 8em 1fr; gap: 6px 12px; margin: 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; }
+    .note { color: var(--muted); white-space: pre-wrap; }
+    ul { margin: 8px 0 0; padding-left: 1.2em; }
+    .error { color: #b91c1c; }
+    form.ask { display: flex; gap: 8px; margin: 0; }
+    form.ask input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    form.ask input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(241, 90, 0, 0.16);
+    }
+    form.ask button {
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      padding: 8px 14px;
+      box-shadow: 0 6px 16px rgba(241, 90, 0, 0.22);
+    }
+    .answer { margin: 12px 0 0; }
+    .answer p, .answer ul, .answer ol { margin: 0 0 8px; }
+    .answer ul, .answer ol { padding-left: 1.2em; }
+    details { margin-top: 8px; }
+    .quote { white-space: pre-wrap; font-family: inherit; margin: 8px 0 0; }
+  </style>
+</head>
+<body>
+  <main id="page">正在加载…</main>
+  <script src="/static/labels.js"></script>
+  <script src="/static/markdown.js"></script>
+  <script>
+    function text(value) {
+      return value == null || value === "" ? "未录入" : String(value);
+    }
+
+    function money(value) {
+      if (value == null) return "未公布";
+      const number = Number(value);
+      return Number.isFinite(number) ? String(number) : String(value);
+    }
+
+    function section(title) {
+      const block = document.createElement("section");
+      const heading = document.createElement("h2");
+      heading.textContent = title;
+      block.appendChild(heading);
+      return block;
+    }
+
+    function row(list, label, value) {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = value;
+      list.append(dt, dd);
+    }
+
+    function render(data) {
+      const page = document.getElementById("page");
+      page.replaceChildren();
+      const back = document.createElement("a");
+      back.href = "/browse";
+      back.textContent = "返回筛选";
+      const title = document.createElement("h1");
+      title.textContent = label(PROGRAMS, data.program_name);
+      const meta = document.createElement("p");
+      meta.className = "meta";
+      meta.textContent = label(UNIVERSITIES, data.university_name) + " · " + data.department_name + " · " + data.admission_year + "年" + data.entry_month + "月";
+      page.append(back, title, meta);
+
+      const facts = section("申请条件");
+      const factsList = document.createElement("dl");
+      row(factsList, "GRE", label(STATUSES, data.gre_requirement) || "未录入");
+      row(factsList, "入学考试", label(STATUSES, data.entrance_exam_status) || "未录入");
+      row(factsList, "面试", label(STATUSES, data.interview_status) || "未录入");
+      row(factsList, "推荐信", data.recommendation_letter_count == null ? "未录入" : String(data.recommendation_letter_count));
+      row(factsList, "联系教授", label(STATUSES, data.professor_contact_status) || "未录入");
+      facts.appendChild(factsList);
+      if (data.gpa_note) {
+        const note = document.createElement("p");
+        note.className = "note";
+        note.textContent = data.gpa_note;
+        facts.appendChild(note);
+      }
+      if (data.gre_note) {
+        const note = document.createElement("p");
+        note.className = "note";
+        note.textContent = data.gre_note;
+        facts.appendChild(note);
+      }
+      page.appendChild(facts);
+
+      const rounds = section("申请轮次");
+      if (!data.rounds.length) {
+        rounds.append("未录入");
+      }
+      for (const round of data.rounds) {
+        const block = document.createElement("div");
+        const name = document.createElement("strong");
+        name.textContent = round.name;
+        block.appendChild(name);
+        const list = document.createElement("dl");
+        row(list, "申请人群", label(APPLICANT_GROUPS, round.applicant_group) || "未录入");
+        row(list, "开放", text(round.opens_on));
+        row(list, "截止", text(round.deadline));
+        row(list, "考试日", text(round.exam_date));
+        block.appendChild(list);
+        if (round.exam_subjects.length) {
+          const subjects = document.createElement("ul");
+          for (const subject of round.exam_subjects) {
+            const li = document.createElement("li");
+            li.textContent = subject.subject;
+            subjects.appendChild(li);
+          }
+          block.appendChild(subjects);
+        }
+        if (round.notes) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = round.notes;
+          block.appendChild(note);
+        }
+        rounds.appendChild(block);
+      }
+      page.appendChild(rounds);
+
+      const languages = section("语言");
+      if (!data.languages.length) languages.append("未录入");
+      for (const language of data.languages) {
+        const item = document.createElement("p");
+        const parts = [label(TESTS, language.test_type), "总分 " + (language.minimum_overall == null ? "无最低分" : money(language.minimum_overall))];
+        const subs = [
+          ["阅读", language.minimum_reading],
+          ["写作", language.minimum_writing],
+          ["听力", language.minimum_listening],
+          ["口语", language.minimum_speaking],
+        ].filter((pair) => pair[1] != null);
+        if (subs.length) parts.push(subs.map((pair) => pair[0] + " " + money(pair[1])).join("，"));
+        if (language.requirement_status && language.requirement_status !== "required") {
+          parts.push(label(STATUSES, language.requirement_status));
+        }
+        item.textContent = parts.join(" · ");
+        languages.appendChild(item);
+        if (language.notes) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = language.notes;
+          languages.appendChild(note);
+        }
+      }
+      page.appendChild(languages);
+
+      const fees = section("学费");
+      if (!data.tuitions.length) fees.append("未录入");
+      for (const fee of data.tuitions) {
+        const item = document.createElement("p");
+        item.textContent = label(STUDENTS, fee.student_category) + " " + money(fee.amount) + " " + (fee.currency || "") + " / " + label(BILLING, fee.billing_period)
+          + (fee.mandatory_fee == null ? "" : "；另计 " + money(fee.mandatory_fee) + " " + (fee.currency || ""));
+        fees.appendChild(item);
+        if (fee.notes) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = fee.notes;
+          fees.appendChild(note);
+        }
+      }
+      page.appendChild(fees);
+
+      const originals = section("官网原文");
+      if (!data.documents || !data.documents.length) {
+        const empty = document.createElement("p");
+        empty.className = "note";
+        empty.textContent = "尚未入库。空着表示这份原文还没保存，不表示没有招生要求。";
+        originals.appendChild(empty);
+      } else {
+        const docs = document.createElement("ul");
+        for (const item of data.documents) {
+          const li = document.createElement("li");
+          const anchor = document.createElement("a");
+          anchor.href = item.source_url;
+          anchor.target = "_blank";
+          anchor.rel = "noreferrer";
+          anchor.textContent = item.title || label(SOURCE_TYPES, item.document_type);
+          li.appendChild(anchor);
+          const note = document.createElement("span");
+          note.textContent = " · " + label(SOURCE_TYPES, item.document_type)
+            + " · " + (item.admission_year == null ? "年份未标" : item.admission_year + " 年入学")
+            + " · " + item.chunk_count + " 段";
+          li.appendChild(note);
+          docs.appendChild(li);
+        }
+        originals.appendChild(docs);
+      }
+      page.appendChild(originals);
+
+      const askBox = section("官网问答");
+      const form = document.createElement("form");
+      form.className = "ask";
+      const input = document.createElement("input");
+      input.placeholder = "只根据这一入学季的官网原文回答";
+      const button = document.createElement("button");
+      button.type = "submit";
+      button.textContent = "提问";
+      const result = document.createElement("div");
+      form.append(input, button);
+      askBox.append(form, result);
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const question = input.value.trim();
+        if (!question) return;
+        result.className = "";
+        result.replaceChildren();
+        result.textContent = "正在检索这一入学季的官网原文…";
+        fetch("/intakes/" + match[1] + "/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: question }),
+        })
+          .then(async (response) => {
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.detail || "问答没有完成");
+            return payload;
+          })
+          .then((payload) => {
+            result.replaceChildren();
+            const answer = document.createElement("div");
+            answer.className = "answer";
+            renderMarkdown(answer, payload.answer);
+            result.appendChild(answer);
+            for (const [index, citation] of (payload.citations || []).entries()) {
+              const block = document.createElement("details");
+              const summary = document.createElement("summary");
+              summary.textContent = "[" + (index + 1) + "] " + (citation.document_title || "官网原文")
+                + (citation.heading_path ? " · " + citation.heading_path : "")
+                + (citation.page_start == null ? "" : " · 第 " + citation.page_start + " 页")
+                + (citation.admission_year == null ? "" : " · " + citation.admission_year + "年");
+              const quote = document.createElement("p");
+              quote.className = "quote";
+              quote.textContent = citation.text;
+              const link = document.createElement("a");
+              link.href = citation.source_url;
+              link.target = "_blank";
+              link.rel = "noreferrer";
+              link.textContent = "官网链接";
+              block.append(summary, quote, link);
+              result.appendChild(block);
+            }
+          })
+          .catch((error) => {
+            result.textContent = error.message;
+            result.className = "error";
+          });
+      });
+      page.appendChild(askBox);
+
+      const sources = section("来源");
+      const list = document.createElement("ul");
+      const seen = new Set();
+      function addLink(label, url) {
+        if (!url || seen.has(url)) return;
+        seen.add(url);
+        const li = document.createElement("li");
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.target = "_blank";
+        anchor.rel = "noreferrer";
+        anchor.textContent = label;
+        li.appendChild(anchor);
+        list.appendChild(li);
+      }
+      addLink("项目页", data.official_url);
+      for (const source of data.sources) addLink(label(SOURCE_TYPES, source.source_type), source.url);
+      sources.appendChild(list.childNodes.length ? list : document.createTextNode("无"));
+      page.appendChild(sources);
+    }
+
+    const match = location.pathname.match(/\/browse\/intakes\/(\d+)$/);
+    if (!match) {
+      document.getElementById("page").textContent = "地址里没有入学季编号。";
+    } else {
+      fetch("/intakes/" + match[1])
+        .then((response) => {
+          if (!response.ok) throw new Error("没有这条入学季");
+          return response.json();
+        })
+        .then(render)
+        .catch((error) => {
+          const page = document.getElementById("page");
+          page.textContent = error.message;
+          page.className = "error";
+        });
+    }
+  </script>
+</body>
+</html>

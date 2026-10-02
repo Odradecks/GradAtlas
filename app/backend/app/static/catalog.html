@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GradAtlas 项目目录</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1a1a1a;
+      --muted: #666666;
+      --line: #e5e5e5;
+      --bg: #ffffff;
+      --card: #ffffff;
+      --accent: #F15A00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header, main { max-width: 1180px; margin: 0 auto; padding: 28px 24px; }
+    header { padding-bottom: 0; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    p.lead { margin: 0; color: var(--muted); line-height: 1.6; }
+    form {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+      gap: 12px;
+      align-items: end;
+      margin: 20px 0 12px;
+      padding: 18px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(241, 90, 0, 0.06);
+    }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--muted); }
+    select, button {
+      font: inherit;
+      color: var(--ink);
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-width: 0;
+      width: 100%;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(241, 90, 0, 0.16);
+    }
+    button {
+      width: auto;
+      min-width: 96px;
+      padding: 9px 22px;
+      background: var(--accent);
+      color: white;
+      border: 0;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(241, 90, 0, 0.22);
+    }
+    .status { color: var(--muted); min-height: 1.4em; margin: 0 0 10px; }
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(241, 90, 0, 0.06);
+    }
+    table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.92rem; table-layout: fixed; }
+    th, td { text-align: left; vertical-align: top; padding: 12px; border-bottom: 1px solid var(--line); line-height: 1.45; word-break: keep-all; }
+    th { background: #fafafa; font-weight: 600; white-space: nowrap; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media (max-width: 800px) {
+      form { grid-template-columns: 1fr 1fr; }
+    }
+    .empty { padding: 24px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GradAtlas 项目目录</h1>
+    <p class="lead">这里是要覆盖的学校和硕士项目。语言、学费、截止日期只写在已经核对过官网的入学季里。已录入招生要求的项目见 <a href="/browse">筛选页</a>。麻省理工学院只保留学校记录，因为 EECS 目前没有对外招生的终端计算机硕士。</p>
+  </header>
+  <main>
+    <form id="filters">
+      <label>国家
+        <select id="country" name="country"><option value="">全部</option></select>
+      </label>
+      <label>学校
+        <select id="university" name="university"><option value="">全部</option></select>
+      </label>
+      <label>学科
+        <select id="field" name="field"><option value="">全部</option></select>
+      </label>
+      <label>优先级
+        <select id="priority" name="priority">
+          <option value="">全部</option>
+          <option value="P0">P0</option>
+          <option value="P1">P1</option>
+          <option value="P2">P2</option>
+          <option value="none">未分级</option>
+        </select>
+      </label>
+      <button type="submit">筛选</button>
+    </form>
+    <p class="status" id="status">正在加载…</p>
+    <div class="table-wrap" id="results"></div>
+  </main>
+  <script src="/static/labels.js"></script>
+  <script>
+    function option(value, labelText) {
+      const el = document.createElement("option");
+      el.value = value;
+      el.textContent = labelText;
+      return el;
+    }
+
+    function cell(text) {
+      const td = document.createElement("td");
+      td.textContent = text;
+      return td;
+    }
+
+    let universities = [];
+
+    function fillUniversities() {
+      const country = document.getElementById("country").value;
+      const select = document.getElementById("university");
+      const current = select.value;
+      select.replaceChildren(option("", "全部"));
+      for (const item of universities) {
+        if (country && item.country_code !== country) continue;
+        select.appendChild(option(item.slug, label(UNIVERSITIES, item.name)));
+      }
+      if ([...select.options].some((item) => item.value === current)) select.value = current;
+    }
+
+    async function loadFilters() {
+      const response = await fetch("/programs/filters");
+      if (!response.ok) throw new Error("无法加载筛选项");
+      const data = await response.json();
+      const country = document.getElementById("country");
+      const field = document.getElementById("field");
+      universities = data.universities;
+      for (const code of data.countries) country.appendChild(option(code, label(COUNTRIES, code)));
+      for (const item of data.fields) field.appendChild(option(item.slug, label(FIELDS, item.slug)));
+      fillUniversities();
+      country.addEventListener("change", fillUniversities);
+    }
+
+    function requirementText(item) {
+      if (!item.intake_count) return "尚未录入";
+      return "已录入 " + item.intake_count + " 条入学季";
+    }
+
+    async function search(event) {
+      if (event) event.preventDefault();
+      const status = document.getElementById("status");
+      const results = document.getElementById("results");
+      status.textContent = "正在查询…";
+      const params = new URLSearchParams();
+      for (const id of ["country", "university", "field", "priority"]) {
+        const value = document.getElementById(id).value;
+        if (value) params.set(id, value);
+      }
+      const response = await fetch("/catalog/programs?" + params.toString());
+      if (!response.ok) {
+        status.textContent = "查询失败";
+        results.replaceChildren();
+        return;
+      }
+      const data = await response.json();
+      const withIntakes = data.items.filter((item) => item.intake_count > 0).length;
+      status.textContent = "共 " + data.total + " 个项目，其中 " + withIntakes + " 个已有入学季";
+      if (!data.items.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "没有符合条件的项目。";
+        results.replaceChildren(empty);
+        return;
+      }
+      const table = document.createElement("table");
+      const head = document.createElement("tr");
+      for (const name of ["优先级", "学校", "项目", "学位", "学科", "招生要求"]) {
+        const th = document.createElement("th");
+        th.textContent = name;
+        head.appendChild(th);
+      }
+      const thead = document.createElement("thead");
+      thead.appendChild(head);
+      const tbody = document.createElement("tbody");
+      for (const item of data.items) {
+        const tr = document.createElement("tr");
+        const school = document.createElement("td");
+        school.textContent = label(UNIVERSITIES, item.university_name) + "（" + label(COUNTRIES, item.country_code) + "）";
+        const requirement = document.createElement("td");
+        if (item.intake_count && item.university_slug) {
+          const link = document.createElement("a");
+          link.href = "/browse?university=" + encodeURIComponent(item.university_slug);
+          link.textContent = requirementText(item);
+          requirement.appendChild(link);
+        } else {
+          requirement.textContent = requirementText(item);
+        }
+        tr.append(
+          cell(item.priority || "未分级"),
+          school,
+          cell(label(PROGRAMS, item.program_name)),
+          cell(item.degree_type || ""),
+          cell(item.fields.map((slug) => label(FIELDS, slug)).join("、")),
+          requirement,
+        );
+        tbody.appendChild(tr);
+      }
+      table.append(thead, tbody);
+      results.replaceChildren(table);
+    }
+
+    document.getElementById("filters").addEventListener("submit", search);
+    loadFilters().then(() => search()).catch((error) => {
+      document.getElementById("status").textContent = error.message;
+    });
+  </script>
+</body>
+</html>

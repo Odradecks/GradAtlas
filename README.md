@@ -2,6 +2,33 @@
 
 **GradAtlas — 面向留学申请的硕士项目智能检索与 RAG 问答系统**
 
+## 当前进度（2026-09-30）
+
+结构化查询和入学季详情已经可用。数据库里有 246 所学校、363 个项目、54 条入学季，其中 52 条已核对，2 条仍是样例（慕尼黑工业大学 MSc Informatics、赫尔辛基大学 Master's Programme in Computer Science）。
+
+第一版 RAG 先做斯坦福大学 MS Computer Science、2027 年 9 月入学（入学季 2）。该季已核对，而且种子里已经记下 4 个官网地址。这 4 页已经抓取、解析并切块：4 份原文、34 个片段。原始网页按 `国家代码/学校 slug/项目 slug/入学年/` 放在 `app/backend/data/snapshots`。重复执行导入会复用同一内容，不会再插入。
+
+问答接口是 `POST /intakes/{id}/ask`。它只检索该入学季、该年份的片段。样例入学季和没有原文的入学季会直接说明，不会拿别的项目来回答。对话使用 DeepSeek（`DEEPSEEK_API_KEY`、`CHAT_MODEL`，默认 `deepseek-flash`）。嵌入使用 `.env` 里的 `EMBEDDING_*`。当前模型是阿里云百炼 `text-embedding-v4`，请求时指定 1536 维，每批最多 10 条。入学季 2 的 34 个片段已有向量。问 GRE 时，回答依据计算机系 FAQ：MS 申请者不需要、也不考虑 GRE，并附上检索到的原文。入学季 4 会说明仍是样例；没有原文的入学季不会返回斯坦福片段。重复执行嵌入不会新增向量。
+
+同一份网页按内容哈希只存一次。重复执行导入不会再插入同一快照。招生种子如果再次运行，只会停用不再列出的网址，不会删掉已经入库的原文。
+
+### 启动
+
+在 `app/backend` 目录：
+
+```bash
+docker compose up -d --build backend
+docker compose run --rm backend alembic upgrade head
+docker compose run --rm backend python -m app.seed.ingest_stanford_mscs
+docker compose run --rm backend python -m app.rag.index --intake 2
+```
+
+浏览页是 <http://127.0.0.1:8000/browse>。原文快照写在容器里的 `/app/data/snapshots`，对应本机 `app/backend/data/snapshots`（已在 `.gitignore` 中忽略）。
+
+### 下一步
+
+1. 再选 5–8 个已核对项目，按同样流程抓取、切块、嵌入。大规模补录继续暂停。
+
 ## 1. 项目背景
 
 留学申请信息通常分散在大学官网、学院网站、招生简章 PDF、FAQ、课程页面、研究室网站等不同来源中。
@@ -632,3 +659,17 @@ GradAtlas 最终不是一个简单的：
 8. 如何通过 Evaluation 系统衡量 RAG 效果
 
 项目开发过程中，应优先理解这些问题背后的原理，而不是单纯依赖 AI Agent 自动生成代码。
+## 批量收集官网 HTML / PDF
+
+```bash
+cd app/backend
+docker compose exec backend python -m app.ingest.collect --dry-run          # 只看会抓什么
+docker compose exec backend python -m app.ingest.collect --university university-of-tokyo
+docker compose exec backend python -m app.ingest.collect                    # 全部
+```
+
+- 只抓库里已有的地址：`sources`、`programs.official_url`、`app/seed/source_urls.csv`（列：`university_slug,program_slug,url,source_type`）。
+- 遵守 robots.txt，同一站点默认每 2 秒一次请求，超过 50MB、登录页、拦截页会跳过并记入报告。
+- 文件按 `国家/学校/项目/年份/` 存入 `data/snapshots`，相同内容不重复保存，重复运行安全；已抓过的默认跳过，`--refresh` 重新检查更新。
+- 报告在 `data/snapshots/reports/`：`collect-时间.csv`（每个地址的结果）、`missing-urls.csv`（全量运行时列出还没有任何地址的项目）。
+- 这一步只保存原文件，不解析、不嵌入；PDF 解析尚未实现。

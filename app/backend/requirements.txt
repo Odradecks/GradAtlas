@@ -4,3 +4,7 @@ sqlalchemy
 psycopg[binary]
 pgvector
 pydantic-settings
+alembic
+openai
+pypdf
+cryptography
