@@ -20,6 +20,8 @@ _BROWSE_PAGE = _STATIC / "browse.html"
 _CATALOG_PAGE = _STATIC / "catalog.html"
 _INTAKE_PAGE = _STATIC / "intake.html"
 _ACCOUNT_PAGE = _STATIC / "account.html"
+_PRIVACY_PAGE = _STATIC / "privacy.html"
+_TERMS_PAGE = _STATIC / "terms.html"
 app.mount("/static", StaticFiles(directory=_STATIC), name="static")
 
 
@@ -39,6 +41,16 @@ def _page(path: Path) -> HTMLResponse:
 @app.get("/register", response_class=HTMLResponse)
 def account_page():
     return _page(_ACCOUNT_PAGE)
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+def privacy_page():
+    return _page(_PRIVACY_PAGE)
+
+
+@app.get("/terms", response_class=HTMLResponse)
+def terms_page():
+    return _page(_TERMS_PAGE)
 
 
 @app.get("/browse", response_class=HTMLResponse)

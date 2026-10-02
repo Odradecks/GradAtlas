@@ -4,7 +4,7 @@
 
 每完成一个项目，把对应行改成 `- [x]`，并删掉「样例」说明。下一批从第一个未勾选的 P0 开始。
 
-进度：已核对 38，样例待替换 2，未开始 323。
+进度：已核对 44，样例待替换 2，未开始 317。
 
 ## 美国
 
@@ -175,21 +175,21 @@
 ### P0 University of Toronto
 
 - [x] MScAC Computer Science
-- [ ] MSc Computer Science
+- [x] MSc Computer Science
 
 ### P0 University of British Columbia
 
-- [ ] MSc Computer Science
-- [ ] Master of Data Science
+- [x] MSc Computer Science
+- [x] Master of Data Science
 
 ### P0 University of Waterloo
 
-- [ ] MMath Computer Science
-- [ ] Data Science
+- [x] MMath Computer Science
+- [x] Data Science
 
 ### P0 McGill University
 
-- [ ] MSc Computer Science
+- [x] MSc Computer Science
 
 ### P1 University of Alberta
 
